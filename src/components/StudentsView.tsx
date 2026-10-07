@@ -658,14 +658,25 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
 
                 <div>
                   <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
-                    Ngày Sinh
+                    Ngày Sinh *
                   </label>
                   <input
                     type="date"
+                    required
                     value={formData.dob || '2012-01-01'}
-                    onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                    onChange={(e) => {
+                      const newDob = e.target.value;
+                      setFormData({
+                        ...formData,
+                        dob: newDob,
+                        password: formatViDate(newDob) || newDob,
+                      });
+                    }}
+                    className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-pink-500 font-semibold"
                   />
+                  <p className="text-[10px] text-pink-600 mt-1 font-medium">
+                    Mật khẩu đăng nhập mặc định: <strong>{formatViDate(formData.dob || '2012-01-01')}</strong>
+                  </p>
                 </div>
 
                 <div>

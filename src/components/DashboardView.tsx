@@ -18,6 +18,7 @@ import {
   PlusCircle,
   FileSpreadsheet,
   Megaphone,
+  Edit2,
 } from 'lucide-react';
 import { calculateAverageGrade, calculateTotalPoints, getTodayStr } from '../utils/helpers';
 
@@ -28,6 +29,7 @@ interface DashboardViewProps {
   onSelectStudent: (id: string) => void;
   onNavigate: (view: string) => void;
   onShowToast: (msg: string, type?: 'success' | 'error') => void;
+  onOpenQuickEditSchool?: () => void;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
@@ -37,6 +39,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onSelectStudent,
   onNavigate,
   onShowToast,
+  onOpenQuickEditSchool,
 }) => {
   const today = getTodayStr();
   const students = state.students;
@@ -82,18 +85,33 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   return (
     <div className="space-y-6">
       {/* Welcome Banner */}
-      <div className="relative overflow-hidden bg-linear-to-r from-indigo-700 via-indigo-600 to-violet-600 rounded-3xl p-6 lg:p-8 text-white shadow-xl">
+      <div className="relative overflow-hidden bg-linear-to-r from-rose-500 via-pink-500 to-rose-600 rounded-3xl p-6 lg:p-8 text-white shadow-xl">
         <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-white/10 rounded-full blur-2xl pointer-events-none" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-xs font-semibold text-indigo-100 border border-white/20">
-              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-              <span>Năm học {state.config.schoolYear} • THCS Chu Văn An</span>
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-semibold text-rose-50 border border-white/30">
+                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                <span>Năm học {state.config.schoolYear} • {state.config.schoolName || 'Trường THCS Chu Văn An'}</span>
+              </div>
+
+              {/* Sửa thông tin linh động bên ngoài */}
+              {isTeacher && onOpenQuickEditSchool && (
+                <button
+                  type="button"
+                  onClick={onOpenQuickEditSchool}
+                  className="px-2.5 py-1 rounded-full bg-white/20 hover:bg-white/30 text-white text-xs font-bold transition-all border border-white/30 flex items-center gap-1 active:scale-95 cursor-pointer"
+                  title="Chỉnh sửa linh động tên trường, lớp, năm học"
+                >
+                  <Edit2 className="w-3 h-3 text-amber-200" />
+                  <span>Sửa trường & năm học</span>
+                </button>
+              )}
             </div>
             <h2 className="text-2xl lg:text-3xl font-black tracking-tight text-white">
               Chào mừng đến Lớp {state.config.className}!
             </h2>
-            <p className="text-sm text-indigo-100/90 max-w-xl">
+            <p className="text-sm text-pink-50/90 max-w-xl">
               {isTeacher
                 ? `Giáo viên chủ nhiệm: Cô ${state.config.teacherName}. Chúc cô và các con một ngày học tập sôi nổi và đạt nhiều kết quả tốt.`
                 : `Học sinh: ${students.find((s) => s.id === currentStudentId)?.name || 'Học sinh'}. Chúc em học tập thật tốt hôm nay!`}
@@ -105,14 +123,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <>
                 <button
                   onClick={() => onNavigate('attendance')}
-                  className="px-4 py-2.5 bg-white text-indigo-700 font-bold text-xs lg:text-sm rounded-xl shadow-md hover:bg-indigo-50 active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
+                  className="px-4 py-2.5 bg-white text-rose-600 font-bold text-xs lg:text-sm rounded-xl shadow-md hover:bg-rose-50 active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
                 >
                   <CalendarCheck className="w-4 h-4" />
                   <span>Điểm danh ngay</span>
                 </button>
                 <button
                   onClick={() => onNavigate('students')}
-                  className="px-4 py-2.5 bg-indigo-500/40 hover:bg-indigo-500/60 text-white font-semibold text-xs lg:text-sm rounded-xl border border-white/20 transition-all flex items-center gap-2 cursor-pointer"
+                  className="px-4 py-2.5 bg-white/20 hover:bg-white/30 text-white font-semibold text-xs lg:text-sm rounded-xl border border-white/25 transition-all flex items-center gap-2 cursor-pointer"
                 >
                   <Users className="w-4 h-4" />
                   <span>Quản lý học sinh</span>
@@ -121,7 +139,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             )}
             <button
               onClick={() => onNavigate('board')}
-              className="px-4 py-2.5 bg-black/20 hover:bg-black/30 text-white font-semibold text-xs lg:text-sm rounded-xl border border-white/15 transition-all flex items-center gap-2 cursor-pointer"
+              className="px-4 py-2.5 bg-black/15 hover:bg-black/25 text-white font-semibold text-xs lg:text-sm rounded-xl border border-white/20 transition-all flex items-center gap-2 cursor-pointer"
             >
               <Megaphone className="w-4 h-4" />
               <span>Xem bảng tin & sơ đồ</span>

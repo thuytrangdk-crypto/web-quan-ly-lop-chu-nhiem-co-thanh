@@ -6,6 +6,7 @@ const today = getTodayStr();
 export const DEFAULT_INITIAL_STATE: AppState = {
   config: {
     appName: 'Sổ Chủ Nhiệm Điện Tử',
+    schoolName: 'Trường THCS Chu Văn An',
     className: '8A3',
     schoolYear: '2024 - 2025',
     teacherName: 'Nguyễn Thị Thùy Trang',
@@ -24,7 +25,7 @@ export const DEFAULT_INITIAL_STATE: AppState = {
       parentName: 'Nguyễn Văn Hùng',
       parentPhone: '0988111221',
       address: 'Số 12 ngõ 45 phố Hoàng Hoa Thám, Hà Nội',
-      password: '123',
+      password: '15/05/2012',
       conduct: 'Tốt',
       grades: {
         'Toán': 9.2,
@@ -48,7 +49,7 @@ export const DEFAULT_INITIAL_STATE: AppState = {
       parentName: 'Trần Quang Hải',
       parentPhone: '0988111222',
       address: 'Phòng 402 Tòa nhà CT3 Cầu Giấy, Hà Nội',
-      password: '123',
+      password: '20/08/2012',
       conduct: 'Tốt',
       grades: {
         'Toán': 9.8,
@@ -72,7 +73,7 @@ export const DEFAULT_INITIAL_STATE: AppState = {
       parentName: 'Lê Văn Thành',
       parentPhone: '0988111223',
       address: 'Số 88 đường Lạc Long Quân, Tây Hồ, Hà Nội',
-      password: '123',
+      password: '10/11/2012',
       conduct: 'Tốt',
       grades: {
         'Toán': 8.0,
@@ -96,7 +97,7 @@ export const DEFAULT_INITIAL_STATE: AppState = {
       parentName: 'Phạm Quốc Tuấn',
       parentPhone: '0988111224',
       address: 'Số 15 phố Kim Mã, Ba Đình, Hà Nội',
-      password: '123',
+      password: '03/02/2012',
       conduct: 'Tốt',
       grades: {
         'Toán': 8.5,
@@ -120,7 +121,7 @@ export const DEFAULT_INITIAL_STATE: AppState = {
       parentName: 'Vũ Đức Minh',
       parentPhone: '0988111225',
       address: 'Số 32 ngõ 178 Đội Cấn, Ba Đình, Hà Nội',
-      password: '123',
+      password: '18/09/2012',
       conduct: 'Tốt',
       grades: {
         'Toán': 8.7,
@@ -144,7 +145,7 @@ export const DEFAULT_INITIAL_STATE: AppState = {
       parentName: 'Đỗ Đình Trọng',
       parentPhone: '0988111226',
       address: 'Số 68 Thụy Khuê, Tây Hồ, Hà Nội',
-      password: '123',
+      password: '25/12/2012',
       conduct: 'Tốt',
       grades: {
         'Toán': 8.0,
@@ -168,7 +169,7 @@ export const DEFAULT_INITIAL_STATE: AppState = {
       parentName: 'Hoàng Văn Sơn',
       parentPhone: '0988111227',
       address: 'Số 20 ngách 5 Nguyễn Khánh Toàn, Cầu Giấy, Hà Nội',
-      password: '123',
+      password: '09/04/2012',
       conduct: 'Khá',
       grades: {
         'Toán': 7.5,
@@ -192,7 +193,7 @@ export const DEFAULT_INITIAL_STATE: AppState = {
       parentName: 'Bùi Tuấn Anh',
       parentPhone: '0988111228',
       address: 'Số 114 phố Nghĩa Tân, Cầu Giấy, Hà Nội',
-      password: '123',
+      password: '14/07/2012',
       conduct: 'Tốt',
       grades: {
         'Toán': 8.3,

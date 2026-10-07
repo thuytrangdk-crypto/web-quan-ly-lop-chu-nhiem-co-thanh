@@ -61,6 +61,7 @@ export interface BoardNotice {
 
 export interface ClassConfig {
   appName: string;
+  schoolName: string;
   className: string;
   schoolYear: string;
   teacherName: string;

@@ -9,7 +9,7 @@ import {
   UserRole,
 } from './types';
 import { DEFAULT_INITIAL_STATE } from './defaultData';
-import { generateId, getTodayStr } from './utils/helpers';
+import { formatViDate, generateId, getTodayStr } from './utils/helpers';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { LoginModal } from './components/LoginModal';
@@ -22,6 +22,7 @@ import { StudentProfileModal } from './components/StudentProfileModal';
 import { ClassSwitchModal } from './components/ClassSwitchModal';
 import { SupabaseModal } from './components/SupabaseModal';
 import { ChangePasswordModal } from './components/ChangePasswordModal';
+import { QuickEditSchoolModal } from './components/QuickEditSchoolModal';
 import { supabaseService, SyncStatus } from './services/supabaseService';
 import { CheckCircle2, AlertCircle } from 'lucide-react';
 
@@ -83,6 +84,7 @@ export default function App() {
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isClassSwitchOpen, setIsClassSwitchOpen] = useState(false);
+  const [isQuickEditSchoolOpen, setIsQuickEditSchoolOpen] = useState(false);
   const [isSupabaseModalOpen, setIsSupabaseModalOpen] = useState(false);
   const [isTeacherPasswordModalOpen, setIsTeacherPasswordModalOpen] = useState(false);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
@@ -254,6 +256,25 @@ export default function App() {
     showToast(`Đã chuyển sang Lớp ${data.className} (Năm học ${data.schoolYear})`);
   };
 
+  const handleSaveQuickEditSchool = (data: {
+    schoolName: string;
+    className: string;
+    schoolYear: string;
+    teacherName: string;
+  }) => {
+    setState((prev) => ({
+      ...prev,
+      config: {
+        ...prev.config,
+        schoolName: data.schoolName,
+        className: data.className,
+        schoolYear: data.schoolYear,
+        teacherName: data.teacherName,
+      },
+    }));
+    showToast(`Đã cập nhật: ${data.schoolName} - Lớp ${data.className} (${data.schoolYear})`);
+  };
+
   const handleUpdateSeatingChart = (newChart: Record<string, string>) => {
     setState((prev) => ({
       ...prev,
@@ -294,12 +315,20 @@ export default function App() {
 
   // Student CRUD
   const handleAddStudent = (newStudentData: Partial<Student>) => {
-    const newStudent = newStudentData as Student;
+    const dobFormatted = newStudentData.dob ? formatViDate(newStudentData.dob) : '';
+    const newStudent: Student = {
+      ...(newStudentData as Student),
+      password:
+        newStudentData.password?.trim() ||
+        dobFormatted ||
+        newStudentData.dob ||
+        '123',
+    };
     setState((prev) => ({
       ...prev,
       students: [...prev.students, newStudent],
     }));
-    showToast(`Đã thêm học sinh: ${newStudent.name}`);
+    showToast(`Đã thêm học sinh: ${newStudent.name} (Mật khẩu: ${newStudent.password})`);
   };
 
   const handleUpdateStudent = (studentData: Partial<Student>) => {
@@ -342,6 +371,10 @@ export default function App() {
     mode: 'append' | 'replace' = 'replace'
   ) => {
     let nextStateToSave: AppState | null = null;
+    const formattedStudents = newStudents.map((s) => ({
+      ...s,
+      password: s.password?.trim() || (s.dob ? formatViDate(s.dob) : '123'),
+    }));
 
     setState((prev) => {
       let updatedStudents: Student[];
@@ -352,8 +385,8 @@ export default function App() {
 
       if (mode === 'replace') {
         // REPLACE ENTIRELY: only keep the new list of students!
-        updatedStudents = newStudents;
-        const newIds = new Set(newStudents.map((s) => s.id));
+        updatedStudents = formattedStudents;
+        const newIds = new Set(formattedStudents.map((s) => s.id));
         updatedAttendance = prev.attendance.filter((a) => newIds.has(a.studentId));
         updatedDiscipline = prev.discipline.filter((d) => newIds.has(d.studentId));
         updatedNotes = prev.notes.filter((n) => newIds.has(n.studentId));
@@ -363,7 +396,7 @@ export default function App() {
       } else {
         // Append mode: avoid duplicate additions
         const existingNames = new Set(prev.students.map((s) => `${s.name.toLowerCase().trim()}_${s.dob}`));
-        const toAdd = newStudents.filter(
+        const toAdd = formattedStudents.filter(
           (s) => !existingNames.has(`${s.name.toLowerCase().trim()}_${s.dob}`)
         );
         updatedStudents = [...prev.students, ...toAdd];
@@ -702,7 +735,7 @@ export default function App() {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-100 font-sans text-gray-800">
+    <div className="flex h-screen overflow-hidden bg-pink-50/70 font-sans text-gray-800">
       {/* 1. Login Modal if unauthenticated */}
       {!authRole && (
         <LoginModal
@@ -721,6 +754,7 @@ export default function App() {
             currentView={currentView}
             onNavigate={(view) => setCurrentView(view)}
             className={state.config.className}
+            schoolName={state.config.schoolName}
             classAvatar={state.config.classAvatar}
             isTeacher={authRole === 'teacher'}
             studentName={state.students.find((s) => s.id === authStudentId)?.name}
@@ -743,6 +777,8 @@ export default function App() {
             <Header
               title={pageTitles[currentView] || 'Trợ lý chủ nhiệm'}
               className={state.config.className}
+              schoolName={state.config.schoolName}
+              schoolYear={state.config.schoolYear}
               teacherName={state.config.teacherName}
               isTeacher={authRole === 'teacher'}
               studentName={state.students.find((s) => s.id === authStudentId)?.name}
@@ -755,10 +791,11 @@ export default function App() {
               onOpenMyProfile={() => {
                 if (authStudentId) setSelectedStudentId(authStudentId);
               }}
+              onOpenQuickEditSchool={() => setIsQuickEditSchoolOpen(true)}
               onLogout={handleLogout}
             />
 
-            <main className="flex-1 overflow-y-auto p-4 lg:p-8 bg-gray-50/60 custom-scrollbar">
+            <main className="flex-1 overflow-y-auto p-3 sm:p-5 lg:p-8 bg-pink-50/40 custom-scrollbar">
               {currentView === 'dashboard' && (
                 <DashboardView
                   state={state}
@@ -773,6 +810,7 @@ export default function App() {
                   }}
                   onNavigate={(view) => setCurrentView(view)}
                   onShowToast={showToast}
+                  onOpenQuickEditSchool={() => setIsQuickEditSchoolOpen(true)}
                 />
               )}
 
@@ -860,6 +898,19 @@ export default function App() {
               availableClasses={state.config.availableClasses || ['9A5', '8A3', '7A1', '6A2']}
               onSave={handleSaveClassSwitch}
               onClose={() => setIsClassSwitchOpen(false)}
+            />
+          )}
+
+          {/* Quick Edit School & Year Modal (Cho phép giáo viên chủ nhiệm sửa linh động từ bên ngoài) */}
+          {authRole === 'teacher' && (
+            <QuickEditSchoolModal
+              isOpen={isQuickEditSchoolOpen}
+              schoolName={state.config.schoolName || 'Trường THCS Chu Văn An'}
+              className={state.config.className}
+              schoolYear={state.config.schoolYear}
+              teacherName={state.config.teacherName}
+              onSave={handleSaveQuickEditSchool}
+              onClose={() => setIsQuickEditSchoolOpen(false)}
             />
           )}
 

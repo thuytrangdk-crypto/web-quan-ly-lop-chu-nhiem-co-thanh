@@ -19,6 +19,7 @@ import {
   Camera,
   X,
   PlusCircle,
+  Plus,
   Trash2,
   Save,
   CheckCircle2,
@@ -53,6 +54,25 @@ interface StudentProfileModalProps {
   onShowToast: (msg: string, type?: 'success' | 'error') => void;
 }
 
+const PRESET_RULES = [
+  { label: 'Nói chuyện riêng trong giờ (-3đ)', name: 'Nói chuyện riêng trong giờ', points: -3, type: 'minus' as const },
+  { label: 'Đi học muộn (-2đ)', name: 'Đi học muộn', points: -2, type: 'minus' as const },
+  { label: 'Không làm bài tập (-5đ)', name: 'Không làm bài tập', points: -5, type: 'minus' as const },
+  { label: 'Vi phạm đồng phục / tác phong (-2đ)', name: 'Vi phạm đồng phục / tác phong', points: -2, type: 'minus' as const },
+  { label: 'Không chú ý nghe giảng (-2đ)', name: 'Không chú ý nghe giảng', points: -2, type: 'minus' as const },
+  { label: 'Không học bài cũ (-4đ)', name: 'Không học bài cũ', points: -4, type: 'minus' as const },
+  { label: 'Mất trật tự trong giờ học (-3đ)', name: 'Mất trật tự trong giờ học', points: -3, type: 'minus' as const },
+  { label: 'Sử dụng điện thoại trong giờ (-5đ)', name: 'Sử dụng điện thoại trong giờ', points: -5, type: 'minus' as const },
+  { label: 'Gây gổ / đánh nhau (-10đ)', name: 'Gây gổ / đánh nhau', points: -10, type: 'minus' as const },
+  { label: 'Bỏ tiết / trốn học (-10đ)', name: 'Bỏ tiết / trốn học', points: -10, type: 'minus' as const },
+  { label: 'Phát biểu xây dựng bài sôi nổi (+5đ)', name: 'Phát biểu xây dựng bài sôi nổi', points: 5, type: 'plus' as const },
+  { label: 'Đạt điểm tốt (9, 10) (+5đ)', name: 'Đạt điểm tốt (9, 10)', points: 5, type: 'plus' as const },
+  { label: 'Giúp đỡ bạn bè / việc tốt (+3đ)', name: 'Giúp đỡ bạn bè / việc tốt', points: 3, type: 'plus' as const },
+  { label: 'Trực nhật sạch sẽ, gương mẫu (+5đ)', name: 'Trực nhật sạch sẽ, gương mẫu', points: 5, type: 'plus' as const },
+  { label: 'Đạt giải phong trào / thi đấu (+10đ)', name: 'Đạt giải phong trào / thi đấu', points: 10, type: 'plus' as const },
+  { label: 'Khác (Tự nhập nội dung & điểm)', name: 'Khác', points: 0, type: 'minus' as const },
+];
+
 export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
   studentId,
   state,
@@ -82,11 +102,15 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
   );
 
   // Discipline record form state
-  const [isAddingDiscipline, setIsAddingDiscipline] = useState(false);
-  const [disciplineRule, setDisciplineRule] = useState('');
-  const [disciplinePoints, setDisciplinePoints] = useState<number>(5);
-  const [disciplineNote, setDisciplineNote] = useState('');
-  const [disciplineType, setDisciplineType] = useState<'plus' | 'minus'>('plus');
+  const [disciplineDate, setDisciplineDate] = useState<string>(getTodayStr());
+  const [selectedRuleIndex, setSelectedRuleIndex] = useState<number>(0);
+  const [customRuleName, setCustomRuleName] = useState<string>('');
+  const [customPoints, setCustomPoints] = useState<number>(-2);
+  const [disciplineNote, setDisciplineNote] = useState<string>('');
+
+  // Selected evaluation month (e.g. '2026-10')
+  const currentMonthStr = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+  const [selectedMonth, setSelectedMonth] = useState<string>(currentMonthStr);
 
   // Note form state
   const [isAddingNote, setIsAddingNote] = useState(false);
@@ -103,6 +127,38 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
     (d) => d.studentId === student.id
   );
   const totalPoints = calculateTotalPoints(state.discipline, student.id);
+
+  // Available evaluation months
+  const availableMonths = React.useMemo(() => {
+    const set = new Set<string>();
+    set.add(currentMonthStr);
+    personalDiscipline.forEach((d) => {
+      if (d.date && d.date.length >= 7) {
+        set.add(d.date.substring(0, 7));
+      }
+    });
+    return Array.from(set).sort().reverse();
+  }, [personalDiscipline, currentMonthStr]);
+
+  // Displayed discipline records based on selected month
+  const displayedDiscipline = React.useMemo(() => {
+    if (selectedMonth === 'all') return personalDiscipline;
+    return personalDiscipline.filter((d) => d.date && d.date.startsWith(selectedMonth));
+  }, [personalDiscipline, selectedMonth]);
+
+  // Net points in selected evaluation period
+  const periodNetPoints = React.useMemo(() => {
+    return displayedDiscipline.reduce((sum, d) => sum + (d.points || 0), 0);
+  }, [displayedDiscipline]);
+
+  // Evaluation conduct rank based on period net points
+  const periodConduct = React.useMemo(() => {
+    if (periodNetPoints <= -15) return { label: 'Yếu', color: 'text-red-600' };
+    if (periodNetPoints < 0) return { label: 'Chưa đạt', color: 'text-rose-600' };
+    if (periodNetPoints < 15) return { label: 'Đạt', color: 'text-amber-600' };
+    if (periodNetPoints < 30) return { label: 'Khá', color: 'text-blue-600' };
+    return { label: 'Tốt', color: 'text-emerald-600' };
+  }, [periodNetPoints]);
 
   // Personal attendance records
   const personalAttendance = state.attendance.filter(
@@ -141,25 +197,29 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
 
   const handleCreateDiscipline = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!disciplineRule.trim()) return;
+    const ruleObj = PRESET_RULES[selectedRuleIndex] || PRESET_RULES[0];
+    let finalRuleName = ruleObj.name;
+    let finalPoints = ruleObj.points;
+    let finalType = ruleObj.type;
 
-    const finalPoints =
-      disciplineType === 'plus'
-        ? Math.abs(disciplinePoints)
-        : -Math.abs(disciplinePoints);
+    if (ruleObj.name === 'Khác') {
+      finalRuleName = customRuleName.trim() || 'Sự việc khác';
+      finalPoints = customPoints;
+      finalType = customPoints >= 0 ? 'plus' : 'minus';
+    }
 
     onAddDiscipline({
       studentId: student.id,
-      date: getTodayStr(),
-      ruleName: disciplineRule.trim(),
+      date: disciplineDate || getTodayStr(),
+      ruleName: finalRuleName,
       points: finalPoints,
       note: disciplineNote.trim(),
-      type: disciplineType,
+      type: finalType,
     });
 
-    setIsAddingDiscipline(false);
-    setDisciplineRule('');
     setDisciplineNote('');
+    setCustomRuleName('');
+    onShowToast('Đã lưu ghi nhận sự việc thi đua');
   };
 
   const handleCreateNote = (e: React.FormEvent) => {
@@ -188,18 +248,42 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
     onShowToast('Đã đổi mật khẩu đăng nhập của học sinh');
   };
 
+  // Lắng nghe phím ESC để thoát ra hình nền
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
+  if (!student) return null;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-950/70 backdrop-blur-xs animate-fadeIn">
-      <div className="w-full max-w-4xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100 flex flex-col max-h-[92vh]">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 lg:p-6 bg-slate-950/75 backdrop-blur-xs animate-fadeIn cursor-pointer"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-5xl xl:max-w-6xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-pink-200 flex flex-col max-h-[94vh] cursor-default relative"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Modal Top Header with Student Info */}
-        <div className="bg-linear-to-r from-indigo-700 via-indigo-600 to-violet-700 text-white p-6 relative overflow-hidden shrink-0">
-          <button
-            onClick={onClose}
-            aria-label="Đóng"
-            className="absolute top-5 right-5 p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+        <div className="bg-linear-to-r from-rose-500 via-pink-500 to-rose-600 text-white p-5 sm:p-6 relative overflow-hidden shrink-0">
+          {/* Nút thoát ra hình nền to, rõ, nổi bật nhất */}
+          <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-30 flex items-center gap-2">
+            <button
+              onClick={onClose}
+              aria-label="Thoát ra hình nền"
+              title="Thoát ra hình nền / Quay lại màn hình chính lớp học (Phím ESC)"
+              className="px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-2xl bg-white hover:bg-rose-50 active:scale-95 text-rose-700 font-black text-xs sm:text-sm flex items-center gap-2 shadow-xl border-2 border-white/90 transition-all cursor-pointer ring-4 ring-black/10"
+            >
+              <X className="w-4 h-4 sm:w-5 sm:h-5 stroke-[3] text-rose-600" />
+              <span>✕ Thoát ra hình nền</span>
+            </button>
+          </div>
 
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
             {/* Avatar */}
@@ -273,12 +357,12 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
           {/* Navigation Tabs */}
           <div className="flex items-center gap-1 overflow-x-auto custom-scrollbar mt-6 -mb-2 border-b border-white/20 pb-0">
             {[
-              { id: 'info', label: 'Lý lịch & Gia đình', icon: User },
-              { id: 'grades', label: 'Bảng Điểm', icon: BookOpen },
-              { id: 'discipline', label: `Thi Đua (${personalDiscipline.length})`, icon: Award },
-              { id: 'attendance', label: 'Chuyên Cần', icon: Clock },
-              { id: 'notes', label: `Dặn Dò (${personalNotes.length})`, icon: MessageSquare },
-              { id: 'password', label: 'Mật Khẩu', icon: KeyRound },
+              { id: 'info', label: 'Thông tin cá nhân', icon: User },
+              { id: 'attendance', label: `Điểm danh (${personalAttendance.length})`, icon: Clock },
+              { id: 'grades', label: 'Học tập & Điểm số', icon: BookOpen },
+              { id: 'discipline', label: 'Thi đua & Kỷ luật', icon: Award },
+              { id: 'notes', label: `Sổ tay & Liên hệ (${personalNotes.length})`, icon: MessageSquare },
+              { id: 'password', label: 'Mật khẩu', icon: KeyRound },
             ].map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -484,163 +568,227 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
 
           {/* TAB 3: DISCIPLINE */}
           {activeTab === 'discipline' && (
-            <div className="space-y-5">
-              <div className="flex items-center justify-between pb-3 border-b border-gray-200">
-                <div>
-                  <h4 className="font-bold text-sm text-gray-900">
-                    Nhật Ký Thi Đua & Điểm Cộng / Điểm Trừ
-                  </h4>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    Tổng điểm thi đua hiện tại:{' '}
-                    <strong className="text-emerald-600 font-black">
-                      +{totalPoints} điểm
-                    </strong>
-                  </p>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+              {/* CỘT BÊN TRÁI: Ghi nhận sự việc */}
+              <div className="lg:col-span-5 bg-white rounded-2xl border border-gray-200/90 p-5 shadow-2xs space-y-4">
+                <div className="flex items-center gap-2 font-bold text-gray-900 text-sm">
+                  <Plus className="w-4 h-4 text-blue-600 shrink-0 stroke-[2.5]" />
+                  <span>Ghi nhận sự việc</span>
                 </div>
-                {isTeacher && (
+
+                <form onSubmit={handleCreateDiscipline} className="space-y-4">
+                  {/* Ngày xảy ra */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                      Ngày xảy ra <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={disciplineDate}
+                      onChange={(e) => setDisciplineDate(e.target.value)}
+                      className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-semibold text-gray-800 focus:outline-hidden focus:ring-2 focus:ring-blue-500 shadow-2xs"
+                    />
+                  </div>
+
+                  {/* Quy tắc thi đua */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                      Quy tắc thi đua <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={selectedRuleIndex}
+                      onChange={(e) => setSelectedRuleIndex(parseInt(e.target.value))}
+                      className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-hidden focus:ring-2 focus:ring-blue-500 shadow-2xs cursor-pointer"
+                    >
+                      {PRESET_RULES.map((rule, idx) => (
+                        <option key={idx} value={idx}>
+                          {rule.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Nếu chọn Khác */}
+                  {PRESET_RULES[selectedRuleIndex]?.name === 'Khác' && (
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="col-span-2">
+                        <input
+                          type="text"
+                          required
+                          value={customRuleName}
+                          onChange={(e) => setCustomRuleName(e.target.value)}
+                          placeholder="Tên sự việc..."
+                          className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs"
+                        />
+                      </div>
+                      <div>
+                        <input
+                          type="number"
+                          value={customPoints}
+                          onChange={(e) => setCustomPoints(parseInt(e.target.value) || 0)}
+                          placeholder="Điểm..."
+                          className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-center"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Chi tiết sự việc (Tùy chọn) */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                      Chi tiết sự việc (Tùy chọn)
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={disciplineNote}
+                      onChange={(e) => setDisciplineNote(e.target.value)}
+                      placeholder="Ghi chú thêm hoàn cảnh, tiết học..."
+                      className="w-full p-3 bg-white border border-gray-200 rounded-xl text-xs text-gray-800 placeholder-gray-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500 shadow-2xs"
+                    />
+                  </div>
+
+                  {/* Nút lưu ghi nhận */}
                   <button
-                    onClick={() => setIsAddingDiscipline(true)}
-                    className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer"
+                    type="submit"
+                    disabled={!isTeacher}
+                    className={`w-full py-3 px-4 rounded-xl font-bold text-xs shadow-md transition-all cursor-pointer ${
+                      isTeacher
+                        ? 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white shadow-blue-600/20'
+                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    }`}
                   >
-                    <PlusCircle className="w-4 h-4" />
-                    <span>Ghi nhận thi đua</span>
+                    {isTeacher ? 'Lưu ghi nhận sự việc' : 'Chỉ Giáo Viên có quyền ghi nhận'}
                   </button>
-                )}
+                </form>
               </div>
 
-              {/* Add form */}
-              {isAddingDiscipline && (
-                <form
-                  onSubmit={handleCreateDiscipline}
-                  className="p-4 rounded-2xl bg-indigo-50/60 border border-indigo-200 space-y-3"
-                >
-                  <h5 className="font-bold text-xs text-indigo-900">
-                    Thêm Ghi Nhận Thi Đua Nề Nếp
-                  </h5>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className="sm:col-span-2">
-                      <label className="block text-[11px] font-bold text-gray-700 uppercase mb-1">
-                        Hành vi / Tuyên dương / Vi phạm *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={disciplineRule}
-                        onChange={(e) => setDisciplineRule(e.target.value)}
-                        placeholder="VD: Phát biểu tốt môn Toán, hoặc Đi học muộn..."
-                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs focus:outline-hidden focus:ring-1 focus:ring-indigo-500"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[11px] font-bold text-gray-700 uppercase mb-1">
-                        Loại điểm
-                      </label>
-                      <select
-                        value={disciplineType}
-                        onChange={(e) => setDisciplineType(e.target.value as any)}
-                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-semibold focus:outline-hidden"
-                      >
-                        <option value="plus">Điểm cộng (+)</option>
-                        <option value="minus">Điểm trừ (-)</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-[11px] font-bold text-gray-700 uppercase mb-1">
-                        Số điểm
-                      </label>
-                      <input
-                        type="number"
-                        min="1"
-                        max="20"
-                        value={disciplinePoints}
-                        onChange={(e) => setDisciplinePoints(parseInt(e.target.value) || 1)}
-                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold focus:outline-hidden"
-                      />
-                    </div>
-
-                    <div className="sm:col-span-2">
-                      <label className="block text-[11px] font-bold text-gray-700 uppercase mb-1">
-                        Ghi chú thêm
-                      </label>
-                      <input
-                        type="text"
-                        value={disciplineNote}
-                        onChange={(e) => setDisciplineNote(e.target.value)}
-                        placeholder="Chi tiết hoàn cảnh..."
-                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs focus:outline-hidden"
-                      />
-                    </div>
+              {/* CỘT BÊN PHẢI: Kỳ đánh giá tổng điểm, xếp loại hạnh kiểm cố định & Lịch sử sự việc */}
+              <div className="lg:col-span-7 space-y-4">
+                {/* 1. Thẻ tóm tắt cố định trên cùng */}
+                <div className="bg-gray-50/90 rounded-2xl border border-gray-200/90 p-4 lg:p-5 flex items-center justify-between gap-4">
+                  {/* KỲ ĐÁNH GIÁ (THÁNG) */}
+                  <div className="space-y-1.5">
+                    <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                      KỲ ĐÁNH GIÁ (THÁNG)
+                    </label>
+                    <select
+                      value={selectedMonth}
+                      onChange={(e) => setSelectedMonth(e.target.value)}
+                      className="px-3 py-1.5 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-800 shadow-2xs focus:outline-hidden focus:ring-1 focus:ring-blue-500 cursor-pointer"
+                    >
+                      {availableMonths.map((m) => {
+                        const [year, month] = m.split('-');
+                        return (
+                          <option key={m} value={m}>
+                            Tháng {month}/{year}
+                          </option>
+                        );
+                      })}
+                      <option value="all">Tất cả các tháng</option>
+                    </select>
                   </div>
 
-                  <div className="flex justify-end gap-2 pt-2">
-                    <button
-                      type="button"
-                      onClick={() => setIsAddingDiscipline(false)}
-                      className="px-3 py-1.5 rounded-xl border border-gray-300 text-xs text-gray-600 font-bold"
-                    >
-                      Hủy
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-4 py-1.5 rounded-xl bg-indigo-600 text-white font-bold text-xs"
-                    >
-                      Lưu ghi nhận
-                    </button>
-                  </div>
-                </form>
-              )}
-
-              {/* Records List */}
-              <div className="space-y-2">
-                {personalDiscipline.length === 0 ? (
-                  <p className="text-xs text-gray-400 py-6 text-center">
-                    Chưa có lượt ghi nhận nề nếp thi đua nào.
-                  </p>
-                ) : (
-                  personalDiscipline.map((d) => (
+                  {/* TỔNG ĐIỂM */}
+                  <div className="text-right sm:text-center space-y-0.5">
+                    <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                      TỔNG ĐIỂM
+                    </div>
                     <div
-                      key={d.id}
-                      className="p-3.5 rounded-2xl bg-gray-50 border border-gray-200/80 flex items-center justify-between gap-3"
+                      className={`text-2xl lg:text-3xl font-black ${
+                        periodNetPoints < 0
+                          ? 'text-red-600'
+                          : periodNetPoints > 0
+                          ? 'text-emerald-600'
+                          : 'text-gray-700'
+                      }`}
                     >
-                      <div className="flex items-center gap-3">
-                        <span
-                          className={`w-9 h-9 rounded-xl flex items-center justify-center font-black text-xs shrink-0 ${
-                            d.points >= 0
-                              ? 'bg-emerald-100 text-emerald-800'
-                              : 'bg-rose-100 text-rose-800'
-                          }`}
-                        >
-                          {d.points >= 0 ? `+${d.points}` : d.points}
-                        </span>
-                        <div>
-                          <div className="font-bold text-xs text-gray-800">
-                            {d.ruleName}
-                          </div>
-                          {d.note && (
-                            <div className="text-[11px] text-gray-500 mt-0.5">
-                              {d.note}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-3 shrink-0">
-                        <span className="text-[11px] text-gray-400">{d.date}</span>
-                        {isTeacher && (
-                          <button
-                            onClick={() => onDeleteDiscipline(d.id)}
-                            className="p-1 rounded-lg text-gray-400 hover:text-rose-600"
-                            title="Xóa"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-                      </div>
+                      {periodNetPoints > 0 ? `+${periodNetPoints}` : periodNetPoints}
                     </div>
-                  ))
-                )}
+                  </div>
+
+                  {/* HẠNH KIỂM */}
+                  <div className="text-right space-y-0.5">
+                    <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                      HẠNH KIỂM
+                    </div>
+                    <div className={`text-xl lg:text-2xl font-black ${periodConduct.color}`}>
+                      {periodConduct.label}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Bảng Lịch sử sự việc với thanh cuộn mượt mà */}
+                <div className="bg-white rounded-2xl border border-gray-200/90 overflow-hidden shadow-2xs">
+                  <div className="max-h-[380px] overflow-y-auto custom-scrollbar scroll-smooth">
+                    <table className="w-full text-left border-collapse text-xs">
+                      <thead className="sticky top-0 bg-white z-10 border-b border-gray-200 text-gray-600 font-bold">
+                        <tr>
+                          <th className="py-3 px-4 w-28">Ngày</th>
+                          <th className="py-3 px-4">Sự việc</th>
+                          <th className="py-3 px-4 w-20 text-center">Điểm</th>
+                          <th className="py-3 px-4 w-14 text-center">Xóa</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100 text-gray-700">
+                        {displayedDiscipline.length === 0 ? (
+                          <tr>
+                            <td colSpan={4} className="py-10 text-center text-gray-400">
+                              Chưa có sự việc nào được ghi nhận trong kỳ đánh giá này.
+                            </td>
+                          </tr>
+                        ) : (
+                          displayedDiscipline.map((d) => (
+                            <tr
+                              key={d.id}
+                              className="hover:bg-gray-50/70 transition-colors"
+                            >
+                              <td className="py-3.5 px-4 font-medium text-gray-600 whitespace-nowrap">
+                                {formatViDate(d.date)}
+                              </td>
+                              <td className="py-3.5 px-4">
+                                <div className="font-bold text-gray-900 text-[13px]">
+                                  {d.ruleName}
+                                </div>
+                                {d.note && (
+                                  <div className="text-[11px] text-gray-400 mt-0.5 font-normal">
+                                    {d.note}
+                                  </div>
+                                )}
+                              </td>
+                              <td className="py-3.5 px-4 text-center">
+                                <span
+                                  className={`font-black text-sm ${
+                                    d.points < 0 ? 'text-red-600' : 'text-emerald-600'
+                                  }`}
+                                >
+                                  {d.points > 0 ? `+${d.points}` : d.points}
+                                </span>
+                              </td>
+                              <td className="py-3.5 px-4 text-center">
+                                {isTeacher ? (
+                                  <button
+                                    onClick={() => {
+                                      if (window.confirm(`Xóa sự việc "${d.ruleName}"?`)) {
+                                        onDeleteDiscipline(d.id);
+                                      }
+                                    }}
+                                    className="p-1 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                                    title="Xóa sự việc"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                ) : (
+                                  <span className="text-gray-300">--</span>
+                                )}
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -841,6 +989,22 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
               </form>
             </div>
           )}
+        </div>
+
+        {/* Modal Footer with quick exit */}
+        <div className="px-5 sm:px-6 py-4 bg-pink-50/50 border-t border-pink-200/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500 shrink-0">
+          <div className="truncate max-w-[280px] sm:max-w-md text-gray-600">
+            Học sinh: <strong className="text-gray-900 font-bold">{student.name}</strong> • Lớp <strong className="text-pink-700 font-bold">{state.config.className}</strong> ({state.config.schoolName || 'THCS Chu Văn An'})
+            <span className="hidden md:inline ml-2 text-[11px] text-pink-600">• Mật khẩu đăng nhập: Ngày sinh ({formatViDate(student.dob)})</span>
+          </div>
+          <button
+            onClick={onClose}
+            title="Thoát ra hình nền / Quay lại giao diện lớp học"
+            className="w-full sm:w-auto px-5 py-2.5 bg-linear-to-r from-pink-600 via-rose-600 to-pink-600 hover:from-pink-700 hover:to-rose-700 active:scale-95 text-white font-black text-xs sm:text-sm rounded-2xl transition-all cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-pink-600/25"
+          >
+            <X className="w-4 h-4 stroke-[3]" />
+            <span>✕ Thoát ra hình nền (Quay lại trang chính)</span>
+          </button>
         </div>
       </div>
     </div>

@@ -99,14 +99,80 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       </div>
 
       {/* Class Config Form */}
-      <div className="bg-white rounded-3xl p-6 border border-gray-200/80 shadow-xs">
-        <h3 className="text-base font-bold text-gray-900 mb-4 pb-3 border-b border-gray-100 flex items-center gap-2">
-          <School className="w-4 h-4 text-indigo-600" />
-          <span>Thông Tin Lớp Học & Giáo Viên</span>
-        </h3>
+      <div className="bg-white rounded-3xl p-6 sm:p-7 border border-pink-200 shadow-sm">
+        <div className="flex items-center justify-between mb-4 pb-3 border-b border-pink-100">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-pink-100 flex items-center justify-center text-pink-600">
+              <School className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-base font-black text-gray-900">
+                Thông Tin Nhà Trường, Lớp Học & Giáo Viên Chủ Nhiệm
+              </h3>
+              <p className="text-xs text-gray-500">
+                Chỉ có Giáo viên chủ nhiệm mới có quyền thay đổi thông tin này. Thay đổi sẽ cập nhật đồng bộ toàn hệ thống.
+              </p>
+            </div>
+          </div>
+          <span className="hidden sm:inline-flex px-2.5 py-1 rounded-full text-xs font-bold bg-pink-100 text-pink-700 border border-pink-200">
+            Quyền Chủ Nhiệm
+          </span>
+        </div>
 
         <form onSubmit={handleSaveConfig} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
+                Tên Trường Học *
+              </label>
+              <input
+                type="text"
+                value={formConfig.schoolName || ''}
+                onChange={(e) => setFormConfig({ ...formConfig, schoolName: e.target.value })}
+                placeholder="VD: Trường THCS Chu Văn An"
+                className="w-full px-3.5 py-2.5 bg-pink-50/30 border border-pink-200 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-pink-500 font-semibold text-gray-800"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
+                Tên Lớp Chủ Nhiệm *
+              </label>
+              <input
+                type="text"
+                value={formConfig.className}
+                onChange={(e) => setFormConfig({ ...formConfig, className: e.target.value })}
+                placeholder="VD: 8A3"
+                className="w-full px-3.5 py-2.5 bg-pink-50/30 border border-pink-200 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-pink-500 font-bold text-pink-700"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
+                Năm Học *
+              </label>
+              <input
+                type="text"
+                value={formConfig.schoolYear}
+                onChange={(e) => setFormConfig({ ...formConfig, schoolYear: e.target.value })}
+                placeholder="VD: 2024 - 2025"
+                className="w-full px-3.5 py-2.5 bg-pink-50/30 border border-pink-200 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-pink-500 font-semibold text-gray-800"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
+                Họ và Tên Giáo Viên Chủ Nhiệm *
+              </label>
+              <input
+                type="text"
+                value={formConfig.teacherName}
+                onChange={(e) => setFormConfig({ ...formConfig, teacherName: e.target.value })}
+                placeholder="VD: Cô Nguyễn Thị Thùy Trang"
+                className="w-full px-3.5 py-2.5 bg-pink-50/30 border border-pink-200 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-pink-500 font-semibold text-gray-800"
+              />
+            </div>
+
             <div>
               <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
                 Tên Ứng Dụng
@@ -115,43 +181,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 type="text"
                 value={formConfig.appName}
                 onChange={(e) => setFormConfig({ ...formConfig, appName: e.target.value })}
-                className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
-                Tên Lớp Chủ Nhiệm
-              </label>
-              <input
-                type="text"
-                value={formConfig.className}
-                onChange={(e) => setFormConfig({ ...formConfig, className: e.target.value })}
-                className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
-                Năm Học
-              </label>
-              <input
-                type="text"
-                value={formConfig.schoolYear}
-                onChange={(e) => setFormConfig({ ...formConfig, schoolYear: e.target.value })}
-                className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
-                Họ và Tên Giáo Viên Chủ Nhiệm
-              </label>
-              <input
-                type="text"
-                value={formConfig.teacherName}
-                onChange={(e) => setFormConfig({ ...formConfig, teacherName: e.target.value })}
-                className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3.5 py-2.5 bg-pink-50/30 border border-pink-200 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-pink-500 font-semibold"
               />
             </div>
 
@@ -165,7 +195,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 onChange={(e) =>
                   setFormConfig({ ...formConfig, teacherPassword: e.target.value })
                 }
-                className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-indigo-500 font-mono"
+                className="w-full px-3.5 py-2.5 bg-pink-50/30 border border-pink-200 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-pink-500 font-mono"
               />
             </div>
 
@@ -186,7 +216,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   })
                 }
                 placeholder="8A3, 9A5, 7A1, 6A2"
-                className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3.5 py-2.5 bg-pink-50/30 border border-pink-200 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-pink-500"
               />
             </div>
           </div>
@@ -194,10 +224,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           <div className="pt-3 flex justify-end">
             <button
               type="submit"
-              className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md shadow-indigo-600/20 transition-all flex items-center gap-1.5 cursor-pointer"
+              className="px-6 py-2.5 bg-linear-to-r from-pink-600 via-rose-600 to-pink-600 hover:from-pink-700 hover:to-rose-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-pink-600/25 transition-all flex items-center gap-2 cursor-pointer active:scale-95"
             >
               <Save className="w-4 h-4" />
-              <span>Lưu Cấu Hình</span>
+              <span>Lưu Cài Đặt Lớp Học</span>
             </button>
           </div>
         </form>

@@ -21,6 +21,7 @@ interface SidebarProps {
   currentView: string;
   onNavigate: (view: string) => void;
   className: string;
+  schoolName?: string;
   classAvatar?: string;
   isTeacher: boolean;
   studentName?: string;
@@ -39,6 +40,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   currentView,
   onNavigate,
   className,
+  schoolName,
   classAvatar,
   isTeacher,
   studentName,
@@ -82,54 +84,30 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Brand header */}
       <div className="p-5 border-b border-slate-800/80 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="relative group">
-            {classAvatar ? (
-              <img
-                src={classAvatar}
-                alt={`Lớp ${className}`}
-                className="w-11 h-11 rounded-2xl object-cover ring-2 ring-indigo-500/30"
-              />
-            ) : (
-              <div className="w-11 h-11 rounded-2xl bg-linear-to-tr from-indigo-600 via-indigo-500 to-violet-500 flex items-center justify-center text-white font-extrabold text-base shadow-md ring-2 ring-indigo-500/20">
-                {className || '8A3'}
-              </div>
-            )}
-            {isTeacher && (
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                title="Đổi ảnh đại diện lớp"
-                className="absolute -bottom-1 -right-1 p-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-full border border-slate-600 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <Camera className="w-3 h-3" />
-              </button>
-            )}
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleAvatarChange}
-              accept="image/*"
-              className="hidden"
-            />
+          {/* Góc trái: Hình nón tú tài trên nền hồng */}
+          <div className="w-12 h-12 rounded-2xl bg-linear-to-tr from-pink-500 via-rose-500 to-pink-400 flex items-center justify-center text-white shadow-lg shadow-pink-500/25 ring-2 ring-pink-300/40 shrink-0">
+            <GraduationCap className="w-7 h-7 text-white stroke-[2.2]" />
           </div>
 
           <div>
             <div className="flex items-center gap-1.5">
-              <span className="font-extrabold text-base tracking-tight text-white">
+              <span className="font-black text-base tracking-tight text-white">
+                Lớp {className}
+              </span>
+              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-pink-500/20 text-pink-300 border border-pink-500/30">
                 Sổ Chủ Nhiệm
               </span>
-              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                {className}
-              </span>
             </div>
-            <p className="text-xs text-slate-400 font-medium">Trường THCS Chu Văn An</p>
+            <p className="text-xs text-pink-200/70 font-medium truncate max-w-[145px]" title={schoolName || 'Trường THCS Chu Văn An'}>
+              {schoolName || 'Trường THCS Chu Văn An'}
+            </p>
           </div>
         </div>
 
         {/* Mobile close button */}
         <button
           onClick={onCloseMobile}
-          className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+          className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer"
         >
           <X className="w-5 h-5" />
         </button>
@@ -173,7 +151,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               }}
               className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all text-left ${
                 isActive
-                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20 font-semibold'
+                  ? 'bg-linear-to-r from-pink-600 to-rose-600 text-white shadow-md shadow-pink-600/30 font-bold'
                   : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
               }`}
             >
