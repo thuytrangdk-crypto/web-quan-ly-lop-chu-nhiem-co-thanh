@@ -2,5 +2,7 @@
   "name": "Sổ Chủ Nhiệm Điện Tử - Lớp 8A3",
   "description": "Ứng dụng sổ chủ nhiệm điện tử thông minh: quản lý học sinh, điểm danh chuyên cần, thi đua nề nếp, bảng điểm, sơ đồ lớp học và bảng tin.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

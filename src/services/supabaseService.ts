@@ -14,6 +14,9 @@ const ANON_KEY = 'scn_supabase_key';
 const TABLE_NAME = 'so_chu_nhiem_data';
 const ROW_ID = 'class_data_v1';
 
+const DEFAULT_URL = 'https://sohuavueougdlsqerwuk.supabase.co';
+const DEFAULT_KEY = 'sb_publishable_2BcotajR597WKnTP9G0wrg_N8oBj1PM';
+
 class SupabaseService {
   private client: SupabaseClient | null = null;
   private currentUrl: string = '';
@@ -27,11 +30,11 @@ class SupabaseService {
     const url =
       localStorage.getItem(URL_KEY) ||
       (import.meta as any).env?.VITE_SUPABASE_URL ||
-      '';
+      DEFAULT_URL;
     const key =
       localStorage.getItem(ANON_KEY) ||
       (import.meta as any).env?.VITE_SUPABASE_ANON_KEY ||
-      '';
+      DEFAULT_KEY;
 
     if (url && key) {
       try {
@@ -47,8 +50,8 @@ class SupabaseService {
 
   public getCredentials() {
     return {
-      url: this.currentUrl || localStorage.getItem(URL_KEY) || '',
-      key: this.currentKey || localStorage.getItem(ANON_KEY) || '',
+      url: this.currentUrl || localStorage.getItem(URL_KEY) || DEFAULT_URL,
+      key: this.currentKey || localStorage.getItem(ANON_KEY) || DEFAULT_KEY,
     };
   }
 
