@@ -26,6 +26,7 @@ import {
   AlertCircle,
   Star,
   Edit2,
+  History,
 } from 'lucide-react';
 import {
   calculateAverageGrade,
