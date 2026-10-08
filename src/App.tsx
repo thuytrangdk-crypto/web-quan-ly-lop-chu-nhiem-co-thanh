@@ -4,6 +4,7 @@ import {
   AttendanceStatus,
   BoardNotice,
   DisciplineRecord,
+  DisciplineRule,
   NoteRecord,
   Student,
   UserRole,
@@ -97,6 +98,26 @@ export default function App() {
     lastSyncedAt: null,
     errorMessage: null,
   });
+
+  const persistStateImmediately = (nextState: AppState) => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(nextState));
+      if (syncStatus.isTableReady) {
+        supabaseService.saveState(nextState).then((res) => {
+          setSyncStatus((prev) => ({
+            ...prev,
+            isSyncing: false,
+            lastSyncedAt: res.success
+              ? new Date().toLocaleTimeString('vi-VN')
+              : prev.lastSyncedAt,
+            errorMessage: res.error || null,
+          }));
+        });
+      }
+    } catch (e) {
+      console.error('Error persisting state immediately', e);
+    }
+  };
 
   // Persist state to localStorage
   useEffect(() => {
@@ -636,23 +657,32 @@ export default function App() {
         }
       }
 
-      return {
+      const nextState: AppState = {
         ...prev,
         discipline: [...prev.discipline, newDiscipline],
         attendance: nextAtt,
       };
+      persistStateImmediately(nextState);
+      return nextState;
     });
 
     if (syncedStatus) {
       showToast('Đã ghi nhận thi đua & tự động đồng bộ Điểm danh');
+    } else {
+      showToast('Đã ghi nhận sự việc thi đua thành công');
     }
   };
 
   const handleDeleteDiscipline = (recordId: string) => {
-    setState((prev) => ({
-      ...prev,
-      discipline: prev.discipline.filter((d) => d.id !== recordId),
-    }));
+    setState((prev) => {
+      const nextState: AppState = {
+        ...prev,
+        discipline: prev.discipline.filter((d) => d.id !== recordId),
+      };
+      persistStateImmediately(nextState);
+      return nextState;
+    });
+    showToast('Đã xóa sự việc thi đua thành công');
   };
 
   // Notes Handlers
@@ -661,17 +691,25 @@ export default function App() {
       ...record,
       id: generateId(),
     };
-    setState((prev) => ({
-      ...prev,
-      notes: [...prev.notes, newNote],
-    }));
+    setState((prev) => {
+      const nextState: AppState = {
+        ...prev,
+        notes: [...prev.notes, newNote],
+      };
+      persistStateImmediately(nextState);
+      return nextState;
+    });
   };
 
   const handleDeleteNote = (noteId: string) => {
-    setState((prev) => ({
-      ...prev,
-      notes: prev.notes.filter((n) => n.id !== noteId),
-    }));
+    setState((prev) => {
+      const nextState: AppState = {
+        ...prev,
+        notes: prev.notes.filter((n) => n.id !== noteId),
+      };
+      persistStateImmediately(nextState);
+      return nextState;
+    });
   };
 
   // Board Notices Handlers
@@ -697,13 +735,28 @@ export default function App() {
 
   // Config & Reset Handlers
   const handleUpdateConfig = (newConfig: Partial<AppState['config']>) => {
-    setState((prev) => ({
-      ...prev,
-      config: {
-        ...prev.config,
-        ...newConfig,
-      },
-    }));
+    setState((prev) => {
+      const nextState: AppState = {
+        ...prev,
+        config: {
+          ...prev.config,
+          ...newConfig,
+        },
+      };
+      persistStateImmediately(nextState);
+      return nextState;
+    });
+  };
+
+  const handleUpdateDisciplineRules = (rules: DisciplineRule[]) => {
+    setState((prev) => {
+      const nextState: AppState = {
+        ...prev,
+        disciplineRules: rules,
+      };
+      persistStateImmediately(nextState);
+      return nextState;
+    });
   };
 
   const handleResetData = () => {
@@ -877,6 +930,7 @@ export default function App() {
                 <SettingsView
                   state={state}
                   onUpdateConfig={handleUpdateConfig}
+                  onUpdateDisciplineRules={handleUpdateDisciplineRules}
                   onResetData={handleResetData}
                   onClearAllData={handleClearAllData}
                   onImportBackup={handleImportBackup}

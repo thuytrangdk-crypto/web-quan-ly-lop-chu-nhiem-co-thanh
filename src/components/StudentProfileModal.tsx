@@ -37,6 +37,7 @@ import {
   STATUS_META,
   SUBJECT_LIST,
 } from '../utils/helpers';
+import { DEFAULT_DISCIPLINE_RULES } from '../defaultData';
 
 interface StudentProfileModalProps {
   studentId: string;
@@ -54,25 +55,6 @@ interface StudentProfileModalProps {
   onLogout: () => void;
   onShowToast: (msg: string, type?: 'success' | 'error') => void;
 }
-
-const PRESET_RULES = [
-  { label: 'Nói chuyện riêng trong giờ (-3đ)', name: 'Nói chuyện riêng trong giờ', points: -3, type: 'minus' as const },
-  { label: 'Đi học muộn (-2đ)', name: 'Đi học muộn', points: -2, type: 'minus' as const },
-  { label: 'Không làm bài tập (-5đ)', name: 'Không làm bài tập', points: -5, type: 'minus' as const },
-  { label: 'Vi phạm đồng phục / tác phong (-2đ)', name: 'Vi phạm đồng phục / tác phong', points: -2, type: 'minus' as const },
-  { label: 'Không chú ý nghe giảng (-2đ)', name: 'Không chú ý nghe giảng', points: -2, type: 'minus' as const },
-  { label: 'Không học bài cũ (-4đ)', name: 'Không học bài cũ', points: -4, type: 'minus' as const },
-  { label: 'Mất trật tự trong giờ học (-3đ)', name: 'Mất trật tự trong giờ học', points: -3, type: 'minus' as const },
-  { label: 'Sử dụng điện thoại trong giờ (-5đ)', name: 'Sử dụng điện thoại trong giờ', points: -5, type: 'minus' as const },
-  { label: 'Gây gổ / đánh nhau (-10đ)', name: 'Gây gổ / đánh nhau', points: -10, type: 'minus' as const },
-  { label: 'Bỏ tiết / trốn học (-10đ)', name: 'Bỏ tiết / trốn học', points: -10, type: 'minus' as const },
-  { label: 'Phát biểu xây dựng bài sôi nổi (+5đ)', name: 'Phát biểu xây dựng bài sôi nổi', points: 5, type: 'plus' as const },
-  { label: 'Đạt điểm tốt (9, 10) (+5đ)', name: 'Đạt điểm tốt (9, 10)', points: 5, type: 'plus' as const },
-  { label: 'Giúp đỡ bạn bè / việc tốt (+3đ)', name: 'Giúp đỡ bạn bè / việc tốt', points: 3, type: 'plus' as const },
-  { label: 'Trực nhật sạch sẽ, gương mẫu (+5đ)', name: 'Trực nhật sạch sẽ, gương mẫu', points: 5, type: 'plus' as const },
-  { label: 'Đạt giải phong trào / thi đấu (+10đ)', name: 'Đạt giải phong trào / thi đấu', points: 10, type: 'plus' as const },
-  { label: 'Khác (Tự nhập nội dung & điểm)', name: 'Khác', points: 0, type: 'minus' as const },
-];
 
 export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
   studentId,
@@ -92,6 +74,10 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
 }) => {
   const student = state.students.find((s) => s.id === studentId);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  const rulesList = (state.disciplineRules && state.disciplineRules.length > 0)
+    ? state.disciplineRules
+    : DEFAULT_DISCIPLINE_RULES;
 
   const [activeTab, setActiveTab] = useState<
     'info' | 'grades' | 'discipline' | 'attendance' | 'notes' | 'password'
@@ -198,7 +184,7 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
 
   const handleCreateDiscipline = (e: React.FormEvent) => {
     e.preventDefault();
-    const ruleObj = PRESET_RULES[selectedRuleIndex] || PRESET_RULES[0];
+    const ruleObj = rulesList[selectedRuleIndex] || rulesList[0];
     let finalRuleName = ruleObj.name;
     let finalPoints = ruleObj.points;
     let finalType = ruleObj.type;
@@ -608,9 +594,16 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
                       </div>
                       <span>Ghi nhận sự việc</span>
                     </div>
-                    <span className="text-[11px] font-bold text-pink-700 bg-pink-50 px-2.5 py-0.5 rounded-full border border-pink-200/60">
-                      Cập nhật nề nếp
-                    </span>
+                    {/* VỊ TRÍ SỐ 1: Nút Cập nhật nề nếp - Bấm được để lưu ghi nhận ngay */}
+                    <button
+                      type="submit"
+                      form="discipline-form"
+                      className="text-xs font-bold text-pink-700 hover:text-white bg-pink-50 hover:bg-linear-to-r hover:from-pink-500 hover:to-rose-500 active:scale-95 px-3 py-1.5 rounded-xl border border-pink-300 shadow-2xs hover:shadow-sm transition-all cursor-pointer flex items-center gap-1.5 group"
+                      title="Bấm để lưu cập nhật nề nếp"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5 text-pink-600 group-hover:text-white transition-colors" />
+                      <span>Cập nhật nề nếp</span>
+                    </button>
                   </div>
 
                   <form id="discipline-form" onSubmit={handleCreateDiscipline} className="mt-3.5 space-y-3.5">
@@ -642,16 +635,16 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
                         onChange={(e) => setSelectedRuleIndex(parseInt(e.target.value))}
                         className="w-full px-3.5 py-2.5 bg-gray-50/70 focus:bg-white border border-gray-200 focus:border-pink-400 rounded-xl text-xs sm:text-sm font-medium text-gray-800 focus:outline-hidden focus:ring-2 focus:ring-pink-300/50 shadow-2xs cursor-pointer transition-all"
                       >
-                        {PRESET_RULES.map((rule, idx) => (
-                          <option key={idx} value={idx}>
-                            {rule.label}
+                        {rulesList.map((rule, idx) => (
+                          <option key={rule.id || idx} value={idx}>
+                            {rule.name} ({rule.points > 0 ? `+${rule.points}đ` : `${rule.points}đ`})
                           </option>
                         ))}
                       </select>
                     </div>
 
                     {/* Nếu chọn Khác */}
-                    {PRESET_RULES[selectedRuleIndex]?.name === 'Khác' && (
+                    {rulesList[selectedRuleIndex]?.name === 'Khác' && (
                       <div className="grid grid-cols-3 gap-2">
                         <div className="col-span-2">
                           <input
@@ -817,16 +810,18 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
                                 </span>
                               </td>
                               <td className="py-3 px-4 text-center">
+                                {/* VỊ TRÍ SỐ 2: Nút thùng rác xóa sự việc - Xóa tức thì và lưu đồng bộ ngay lập tức */}
                                 <button
-                                  onClick={() => {
-                                    if (window.confirm(`Xóa sự việc "${d.ruleName}"?`)) {
-                                      onDeleteDiscipline(d.id);
-                                    }
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    onDeleteDiscipline(d.id);
                                   }}
-                                  className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
-                                  title="Xóa sự việc"
+                                  className="p-2 rounded-xl text-gray-400 hover:text-red-600 hover:bg-red-50 active:scale-90 transition-all cursor-pointer inline-flex items-center justify-center group"
+                                  title={`Xóa sự việc "${d.ruleName}"`}
                                 >
-                                  <Trash2 className="w-4 h-4" />
+                                  <Trash2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
                                 </button>
                               </td>
                             </tr>

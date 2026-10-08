@@ -40,6 +40,14 @@ export interface DisciplineRecord {
   type: 'plus' | 'minus';
 }
 
+export interface DisciplineRule {
+  id: string;
+  name: string;
+  points: number; // positive for praise, negative for violation
+  type: 'plus' | 'minus';
+  description?: string;
+}
+
 export interface NoteRecord {
   id: string;
   studentId: string;
@@ -78,4 +86,5 @@ export interface AppState {
   notes: NoteRecord[];
   boardNotices: BoardNotice[];
   seatingChart?: Record<string, string>;
+  disciplineRules?: DisciplineRule[];
 }

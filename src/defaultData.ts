@@ -1,7 +1,26 @@
-import { AppState } from './types';
+import { AppState, DisciplineRule } from './types';
 import { getTodayStr } from './utils/helpers';
 
 const today = getTodayStr();
+
+export const DEFAULT_DISCIPLINE_RULES: DisciplineRule[] = [
+  { id: 'rule_01', name: 'Nói chuyện riêng trong giờ', points: -3, type: 'minus', description: 'Trừ điểm nề nếp tiết học' },
+  { id: 'rule_02', name: 'Đi học muộn', points: -2, type: 'minus', description: 'Đến lớp sau hiệu lệnh trống' },
+  { id: 'rule_03', name: 'Không làm bài tập', points: -5, type: 'minus', description: 'Không chuẩn bị bài về nhà' },
+  { id: 'rule_04', name: 'Vi phạm đồng phục / tác phong', points: -2, type: 'minus', description: 'Sai đồng phục, phù hiệu, dép lê' },
+  { id: 'rule_05', name: 'Không chú ý nghe giảng', points: -2, type: 'minus', description: 'Làm việc riêng trong giờ' },
+  { id: 'rule_06', name: 'Không học bài cũ', points: -4, type: 'minus', description: 'Không thuộc bài khi kiểm tra miệng' },
+  { id: 'rule_07', name: 'Mất trật tự trong giờ học', points: -3, type: 'minus', description: 'Ảnh hưởng đến các bạn xung quanh' },
+  { id: 'rule_08', name: 'Sử dụng điện thoại trong giờ', points: -5, type: 'minus', description: 'Sử dụng thiết bị không được phép' },
+  { id: 'rule_09', name: 'Gây gổ / đánh nhau', points: -10, type: 'minus', description: 'Vi phạm đạo đức nghiêm trọng' },
+  { id: 'rule_10', name: 'Bỏ tiết / trốn học', points: -10, type: 'minus', description: 'Tự ý ra ngoài không xin phép' },
+  { id: 'rule_11', name: 'Phát biểu xây dựng bài sôi nổi', points: 5, type: 'plus', description: 'Tích cực tương tác trong giờ học' },
+  { id: 'rule_12', name: 'Đạt điểm tốt (9, 10)', points: 5, type: 'plus', description: 'Điểm miệng, 15 phút, 1 tiết xuất sắc' },
+  { id: 'rule_13', name: 'Giúp đỡ bạn bè / việc tốt', points: 3, type: 'plus', description: 'Nhặt được của rơi, đôi bạn cùng tiến' },
+  { id: 'rule_14', name: 'Trực nhật sạch sẽ, gương mẫu', points: 5, type: 'plus', description: 'Vệ sinh lớp học gọn gàng, đúng giờ' },
+  { id: 'rule_15', name: 'Đạt giải phong trào / thi đấu', points: 10, type: 'plus', description: 'Đạt thành tích thể thao, văn nghệ cấp trường' },
+  { id: 'rule_16', name: 'Khác', points: 0, type: 'minus', description: 'Tự nhập nội dung & điểm linh hoạt' },
+];
 
 export const DEFAULT_INITIAL_STATE: AppState = {
   config: {
@@ -316,4 +335,5 @@ export const DEFAULT_INITIAL_STATE: AppState = {
     'desk_1_2': '09042012',
     'desk_1_3': '14072012',
   },
+  disciplineRules: DEFAULT_DISCIPLINE_RULES,
 };

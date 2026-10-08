@@ -16,6 +16,7 @@ const ROW_ID = 'class_data_v1';
 
 const DEFAULT_URL = 'https://sohuavueougdlsqerwuk.supabase.co';
 const DEFAULT_KEY = 'sb_publishable_2BcotajR597WKnTP9G0wrg_N8oBj1PM';
+const CLIENT_SESSION_ID = 'client_' + Math.random().toString(36).substring(2, 10) + '_' + Date.now();
 
 class SupabaseService {
   private client: SupabaseClient | null = null;
@@ -176,9 +177,15 @@ class SupabaseService {
     }
 
     try {
+      const payloadWithMeta = {
+        ...state,
+        _clientSessionId: CLIENT_SESSION_ID,
+        _updatedAt: Date.now(),
+      };
+
       const { error } = await this.client.from(TABLE_NAME).upsert({
         id: ROW_ID,
-        payload: state,
+        payload: payloadWithMeta,
         updated_at: new Date().toISOString(),
       });
 
@@ -212,7 +219,12 @@ class SupabaseService {
           },
           (payload: any) => {
             if (payload.new && payload.new.payload) {
-              onRemoteChange(payload.new.payload as AppState);
+              const remote = payload.new.payload as any;
+              // Bỏ qua sự kiện tự phản hồi từ chính tab/phiên làm việc này
+              if (remote._clientSessionId === CLIENT_SESSION_ID) {
+                return;
+              }
+              onRemoteChange(remote as AppState);
             }
           }
         )
