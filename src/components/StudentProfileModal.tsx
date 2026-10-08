@@ -249,7 +249,7 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
     onShowToast('Đã đổi mật khẩu đăng nhập của học sinh');
   };
 
-  // Lắng nghe phím ESC để thoát ra hình nền
+  // Lắng nghe phím ESC để đóng modal
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -260,43 +260,52 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
+  const studentAge = React.useMemo(() => {
+    if (!student?.dob) return null;
+    const parts = student.dob.split('-');
+    if (parts.length === 3) {
+      const year = parseInt(parts[0], 10);
+      const currentYear = new Date().getFullYear();
+      const age = currentYear - year;
+      if (age > 0 && age < 100) return age;
+    }
+    return null;
+  }, [student?.dob]);
+
   if (!student) return null;
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 lg:p-6 bg-slate-950/75 backdrop-blur-xs animate-fadeIn cursor-pointer"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 lg:p-6 bg-slate-900/60 backdrop-blur-xs animate-fadeIn cursor-pointer"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-5xl xl:max-w-6xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-pink-200 flex flex-col max-h-[94vh] cursor-default relative"
+        className="w-full max-w-5xl xl:max-w-6xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100 flex flex-col max-h-[92vh] cursor-default relative"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Modal Top Header with Student Info */}
-        <div className="bg-linear-to-r from-rose-500 via-pink-500 to-rose-600 text-white p-5 sm:p-6 relative overflow-hidden shrink-0">
-          {/* Nút thoát ra hình nền to, rõ, nổi bật nhất */}
-          <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-30 flex items-center gap-2">
-            <button
-              onClick={onClose}
-              aria-label="Thoát ra hình nền"
-              title="Thoát ra hình nền / Quay lại màn hình chính lớp học (Phím ESC)"
-              className="px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-2xl bg-white hover:bg-rose-50 active:scale-95 text-rose-700 font-black text-xs sm:text-sm flex items-center gap-2 shadow-xl border-2 border-white/90 transition-all cursor-pointer ring-4 ring-black/10"
-            >
-              <X className="w-4 h-4 sm:w-5 sm:h-5 stroke-[3] text-rose-600" />
-              <span>✕ Thoát ra hình nền</span>
-            </button>
-          </div>
+        {/* Nút đóng duy nhất ở góc trên bên phải */}
+        <button
+          onClick={onClose}
+          aria-label="Đóng"
+          title="Đóng (Phím ESC)"
+          className="absolute top-4 right-4 z-30 p-2 sm:p-2.5 rounded-full bg-gray-100/90 hover:bg-gray-200 text-gray-500 hover:text-gray-800 transition-all cursor-pointer"
+        >
+          <X className="w-5 h-5 stroke-[2.5]" />
+        </button>
 
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
+        {/* Modal Top Header with Student Info (Phong cách thẻ màu sáng trắng theo hình 2) */}
+        <div className="bg-white px-5 sm:px-7 pt-5 sm:pt-6 pb-0 shrink-0 border-b border-gray-100">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-5 pr-10">
             {/* Avatar */}
             <div className="relative group shrink-0">
               {student.avatar ? (
                 <img
                   src={student.avatar}
                   alt={student.name}
-                  className="w-20 h-20 rounded-3xl object-cover ring-4 ring-white/30 shadow-lg"
+                  className="w-20 h-20 sm:w-22 sm:h-22 rounded-2xl object-cover ring-4 ring-pink-50 shadow-sm"
                 />
               ) : (
-                <div className="w-20 h-20 rounded-3xl bg-white/20 backdrop-blur-md flex items-center justify-center font-black text-2xl text-white ring-4 ring-white/30 shadow-lg">
+                <div className="w-20 h-20 sm:w-22 sm:h-22 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center font-black text-2xl text-white shadow-sm ring-4 ring-pink-50">
                   {student.name.charAt(student.name.lastIndexOf(' ') + 1) ||
                     student.name.charAt(0)}
                 </div>
@@ -304,8 +313,8 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
               {isTeacher && (
                 <button
                   onClick={() => avatarInputRef.current?.click()}
-                  title="Tải ảnh học sinh"
-                  className="absolute -bottom-1 -right-1 p-1.5 bg-slate-900/80 hover:bg-slate-900 text-white rounded-xl shadow-md transition-all"
+                  title="Tải ảnh đại diện học sinh"
+                  className="absolute -bottom-1 -right-1 p-1.5 bg-gray-900 hover:bg-gray-800 text-white rounded-xl shadow-md transition-all cursor-pointer"
                 >
                   <Camera className="w-3.5 h-3.5" />
                 </button>
@@ -320,49 +329,122 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
             </div>
 
             {/* Basic details */}
-            <div className="text-center sm:text-left flex-1">
-              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                <h3 className="text-2xl font-black tracking-tight text-white">
+            <div className="text-center sm:text-left flex-1 min-w-0">
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 sm:gap-2.5">
+                <h3 className="text-2xl sm:text-3xl font-black tracking-tight text-gray-900">
                   {student.name}
                 </h3>
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-400 text-amber-950">
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-pink-100 text-pink-700">
                   {student.position || 'Học sinh'}
                 </span>
-                <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-white/20 text-white">
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">
                   Lớp {state.config.className}
                 </span>
               </div>
 
-              <div className="mt-2 flex flex-wrap items-center justify-center sm:justify-start gap-4 text-xs text-indigo-100">
-                <span>Mã định danh: <strong>{student.id}</strong></span>
-                <span>•</span>
-                <span>Ngày sinh: <strong>{formatViDate(student.dob)}</strong></span>
-                <span>•</span>
-                <span>Giới tính: <strong>{student.gender}</strong></span>
+              {/* Dòng metadata thông tin cá nhân gọn gàng */}
+              <div className="mt-2 flex flex-wrap items-center justify-center sm:justify-start gap-x-3.5 gap-y-1 text-xs sm:text-sm text-gray-500">
+                <span>Mã số: <strong className="text-gray-800">{student.id}</strong></span>
+                <span className="text-gray-300">•</span>
+                <span>
+                  Ngày sinh: <strong className="text-gray-800">{formatViDate(student.dob)}</strong>
+                  {studentAge ? <span className="text-gray-500 ml-1">({studentAge} tuổi)</span> : null}
+                </span>
+                <span className="text-gray-300">•</span>
+                <span>Giới tính: <strong className="text-gray-800">{student.gender}</strong></span>
+                {student.parentPhone && (
+                  <>
+                    <span className="text-gray-300 hidden md:inline">•</span>
+                    <span className="hidden md:inline">PH: <strong className="text-indigo-600 font-semibold">{student.parentPhone}</strong></span>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* 4 Thẻ tóm tắt chỉ số nổi bật (Four summary metric cards như hình 2) */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-5 mb-4">
+            {/* Card 1: Điểm Nề Nếp */}
+            <div className="p-3 sm:p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-100 flex items-center gap-3 transition-all hover:shadow-xs">
+              <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                <Award className="w-5 h-5 stroke-[2.5]" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-[10px] sm:text-[11px] font-bold text-gray-500 uppercase tracking-wider truncate">
+                  Điểm Nề Nếp
+                </div>
+                <div className="text-base sm:text-lg font-black text-emerald-700 leading-tight">
+                  +{totalPoints} đ
+                </div>
+                <div className="text-[10px] sm:text-[11px] text-emerald-600 font-semibold truncate">
+                  Xếp loại: {periodConduct.label}
+                </div>
               </div>
             </div>
 
-            {/* Quick stats badge */}
-            <div className="hidden lg:flex flex-col items-end gap-1.5 shrink-0">
-              <div className="px-3.5 py-1.5 rounded-2xl bg-white/15 backdrop-blur-md border border-white/20 text-right">
-                <div className="text-[10px] text-indigo-200 uppercase font-bold">
-                  Điểm Nề Nếp
+            {/* Card 2: Điểm Trung Bình */}
+            <div className="p-3 sm:p-3.5 rounded-2xl bg-blue-50/70 border border-blue-100 flex items-center gap-3 transition-all hover:shadow-xs">
+              <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                <GraduationCap className="w-5 h-5 stroke-[2.5]" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-[10px] sm:text-[11px] font-bold text-gray-500 uppercase tracking-wider truncate">
+                  Điểm Trung Bình
                 </div>
-                <div className="text-lg font-black text-emerald-300">
-                  +{totalPoints} đ
+                <div className="text-base sm:text-lg font-black text-blue-700 leading-tight">
+                  {avgGrade !== null ? avgGrade : '--'}
+                </div>
+                <div className="text-[10px] sm:text-[11px] text-blue-600 font-semibold truncate">
+                  Học lực: {academicRank}
+                </div>
+              </div>
+            </div>
+
+            {/* Card 3: Hạnh Kiểm */}
+            <div className="p-3 sm:p-3.5 rounded-2xl bg-amber-50/70 border border-amber-100 flex items-center gap-3 transition-all hover:shadow-xs">
+              <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+                <Star className="w-5 h-5 stroke-[2.5]" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-[10px] sm:text-[11px] font-bold text-gray-500 uppercase tracking-wider truncate">
+                  Hạnh Kiểm
+                </div>
+                <div className="text-base sm:text-lg font-black text-amber-700 leading-tight">
+                  {student.conduct || 'Tốt'}
+                </div>
+                <div className="text-[10px] sm:text-[11px] text-amber-600 font-semibold truncate">
+                  Rèn luyện toàn diện
+                </div>
+              </div>
+            </div>
+
+            {/* Card 4: Chuyên Cần */}
+            <div className="p-3 sm:p-3.5 rounded-2xl bg-pink-50/70 border border-pink-100 flex items-center gap-3 transition-all hover:shadow-xs">
+              <div className="w-10 h-10 rounded-xl bg-pink-100 text-pink-600 flex items-center justify-center shrink-0">
+                <Clock className="w-5 h-5 stroke-[2.5]" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-[10px] sm:text-[11px] font-bold text-gray-500 uppercase tracking-wider truncate">
+                  Chuyên Cần
+                </div>
+                <div className="text-base sm:text-lg font-black text-pink-700 leading-tight">
+                  {countPresent} buổi
+                </div>
+                <div className="text-[10px] sm:text-[11px] text-pink-600 font-semibold truncate">
+                  {countLate > 0 ? `${countLate} muộn` : 'Đúng giờ'} • {countExcused + countUnexcused} vắng
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Navigation Tabs */}
-          <div className="flex items-center gap-1 overflow-x-auto custom-scrollbar mt-6 -mb-2 border-b border-white/20 pb-0">
+          {/* Navigation Tabs (Thiết kế thanh tab gạch chân hiện đại, thanh thoát) */}
+          <div className="flex items-center gap-2 sm:gap-6 overflow-x-auto custom-scrollbar pt-1 border-t border-gray-100">
             {[
               { id: 'info', label: 'Thông tin cá nhân', icon: User },
               { id: 'attendance', label: `Điểm danh (${personalAttendance.length})`, icon: Clock },
               { id: 'grades', label: 'Học tập & Điểm số', icon: BookOpen },
               { id: 'discipline', label: 'Thi đua & Kỷ luật', icon: Award },
-              { id: 'notes', label: `Sổ tay & Liên hệ (${personalNotes.length})`, icon: MessageSquare },
+              { id: 'notes', label: `Sổ tay & Dặn dò (${personalNotes.length})`, icon: MessageSquare },
               { id: 'password', label: 'Mật khẩu', icon: KeyRound },
             ].map((tab) => {
               const Icon = tab.icon;
@@ -371,14 +453,17 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
-                  className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-t-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+                  className={`flex items-center gap-1.5 py-3 px-1 text-xs sm:text-sm font-semibold transition-all whitespace-nowrap cursor-pointer relative ${
                     isActive
-                      ? 'bg-white text-indigo-900 shadow-md'
-                      : 'text-indigo-100 hover:bg-white/15 hover:text-white'
+                      ? 'text-pink-600 font-bold'
+                      : 'text-gray-500 hover:text-gray-900'
                   }`}
                 >
-                  <Icon className="w-3.5 h-3.5" />
+                  <Icon className={`w-4 h-4 ${isActive ? 'text-pink-600' : 'text-gray-400'}`} />
                   <span>{tab.label}</span>
+                  {isActive && (
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-pink-600 rounded-full" />
+                  )}
                 </button>
               );
             })}
@@ -992,20 +1077,15 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
           )}
         </div>
 
-        {/* Modal Footer with quick exit */}
-        <div className="px-5 sm:px-6 py-4 bg-pink-50/50 border-t border-pink-200/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500 shrink-0">
-          <div className="truncate max-w-[280px] sm:max-w-md text-gray-600">
-            Học sinh: <strong className="text-gray-900 font-bold">{student.name}</strong> • Lớp <strong className="text-pink-700 font-bold">{state.config.className}</strong> ({state.config.schoolName || 'THCS Chu Văn An'})
-            <span className="hidden md:inline ml-2 text-[11px] text-pink-600">• Mật khẩu đăng nhập: Ngày sinh ({formatViDate(student.dob)})</span>
+        {/* Modal Footer (Gọn gàng, tinh tế, không có nút thoát dư thừa) */}
+        <div className="px-6 py-3 bg-gray-50/80 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500 shrink-0">
+          <div className="truncate text-gray-500">
+            Học sinh: <strong className="text-gray-800 font-bold">{student.name}</strong> • Lớp <strong className="text-pink-600 font-bold">{state.config.className}</strong>
+            <span className="hidden sm:inline ml-2 text-gray-400">({state.config.schoolName || 'THCS Chu Văn An'})</span>
           </div>
-          <button
-            onClick={onClose}
-            title="Thoát ra hình nền / Quay lại giao diện lớp học"
-            className="w-full sm:w-auto px-5 py-2.5 bg-linear-to-r from-pink-600 via-rose-600 to-pink-600 hover:from-pink-700 hover:to-rose-700 active:scale-95 text-white font-black text-xs sm:text-sm rounded-2xl transition-all cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-pink-600/25"
-          >
-            <X className="w-4 h-4 stroke-[3]" />
-            <span>✕ Thoát ra hình nền (Quay lại trang chính)</span>
-          </button>
+          <span className="text-[11px] text-gray-400 font-medium hidden sm:inline">
+            Nhấn ESC hoặc nút ✕ góc trên để đóng
+          </span>
         </div>
       </div>
     </div>

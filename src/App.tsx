@@ -109,8 +109,8 @@ export default function App() {
 
   // Update HTML document title
   useEffect(() => {
-    document.title = `${state.config.appName} - Lớp ${state.config.className}`;
-  }, [state.config.appName, state.config.className]);
+    document.title = state.config.appName || 'Sổ Chủ Nhiệm Điện Tử';
+  }, [state.config.appName]);
 
   // Initial Supabase connection check and sync
   useEffect(() => {

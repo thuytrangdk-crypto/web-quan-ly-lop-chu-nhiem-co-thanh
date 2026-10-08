@@ -66,25 +66,25 @@ export const QuickEditSchoolModal: React.FC<QuickEditSchoolModalProps> = ({
         className="w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden border border-pink-200"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header with Pink Gradient */}
-        <div className="bg-linear-to-r from-pink-500 via-rose-500 to-pink-600 p-6 text-white relative">
+        {/* Header with Light Pink Theme */}
+        <div className="bg-linear-to-r from-pink-100 via-rose-100 to-pink-50 p-6 text-gray-900 border-b border-pink-200 relative">
           <button
             onClick={onClose}
-            className="absolute top-5 right-5 p-2 rounded-xl bg-white/20 hover:bg-white/30 text-white transition-all cursor-pointer"
+            className="absolute top-5 right-5 p-2 rounded-xl bg-white/80 hover:bg-white text-gray-600 hover:text-gray-900 border border-pink-200 shadow-2xs transition-all cursor-pointer"
             title="Đóng"
           >
             <X className="w-4 h-4" />
           </button>
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 shadow-inner">
-              <School className="w-6 h-6 text-white" />
+            <div className="w-12 h-12 rounded-2xl bg-white text-pink-600 flex items-center justify-center border border-pink-200 shadow-xs">
+              <School className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="text-xl font-black tracking-tight text-white flex items-center gap-2">
+              <h3 className="text-xl font-black tracking-tight text-gray-900 flex items-center gap-2">
                 <span>Chỉnh Sửa Thông Tin Bên Ngoài</span>
-                <Sparkles className="w-4 h-4 text-amber-300" />
+                <Sparkles className="w-4 h-4 text-amber-500" />
               </h3>
-              <p className="text-xs text-pink-100 mt-0.5 font-medium">
+              <p className="text-xs text-gray-500 mt-0.5 font-medium">
                 Dành cho Giáo viên Chủ nhiệm tùy chỉnh linh động tên trường, lớp và năm học
               </p>
             </div>
