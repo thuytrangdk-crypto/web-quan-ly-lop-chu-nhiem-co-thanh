@@ -735,7 +735,7 @@ export default function App() {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-pink-50/70 font-sans text-gray-800">
+    <div className="flex h-screen overflow-hidden bg-[#fff6f8] font-sans text-gray-800">
       {/* 1. Login Modal if unauthenticated */}
       {!authRole && (
         <LoginModal
@@ -795,7 +795,7 @@ export default function App() {
               onLogout={handleLogout}
             />
 
-            <main className="flex-1 overflow-y-auto p-3 sm:p-5 lg:p-8 bg-pink-50/40 custom-scrollbar">
+            <main className="flex-1 overflow-y-auto p-3 sm:p-5 lg:p-8 bg-[#fff8fa] custom-scrollbar">
               {currentView === 'dashboard' && (
                 <DashboardView
                   state={state}

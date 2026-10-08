@@ -84,14 +84,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Welcome Banner - Màu nền hồng nhạt (hồng phấn) tinh tế, trang nhã */}
-      <div className="relative overflow-hidden bg-linear-to-r from-pink-100 via-rose-100 to-pink-50 rounded-3xl p-6 lg:p-8 text-gray-900 border border-pink-200/80 shadow-md">
-        <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-pink-300/25 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-1/3 -mb-16 w-48 h-48 bg-rose-200/30 rounded-full blur-2xl pointer-events-none" />
+      {/* Welcome Banner - Màu nền hồng phấn nhạt tinh tế, trang nhã như mẫu */}
+      <div className="relative overflow-hidden bg-linear-to-r from-[#fff1f5] via-[#fdf2f7] to-[#fff8fa] rounded-3xl p-6 lg:p-8 text-gray-900 border border-pink-100/90 shadow-sm">
+        <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-pink-200/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-1/3 -mb-16 w-48 h-48 bg-rose-100/25 rounded-full blur-2xl pointer-events-none" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-2 flex-wrap">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/90 backdrop-blur-md text-xs font-semibold text-pink-700 border border-pink-200/80 shadow-2xs">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/95 backdrop-blur-md text-xs font-semibold text-pink-700 border border-pink-200/60 shadow-2xs">
                 <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                 <span>Năm học {state.config.schoolYear} • {state.config.schoolName || 'Trường THCS Chu Văn An'}</span>
               </div>
@@ -101,7 +101,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <button
                   type="button"
                   onClick={onOpenQuickEditSchool}
-                  className="px-2.5 py-1 rounded-full bg-white/85 hover:bg-white text-pink-700 hover:text-pink-800 text-xs font-bold transition-all border border-pink-200/80 flex items-center gap-1 active:scale-95 cursor-pointer shadow-2xs"
+                  className="px-2.5 py-1 rounded-full bg-white/90 hover:bg-white text-pink-700 hover:text-pink-800 text-xs font-bold transition-all border border-pink-200/60 flex items-center gap-1 active:scale-95 cursor-pointer shadow-2xs"
                   title="Chỉnh sửa linh động tên trường, lớp, năm học"
                 >
                   <Edit2 className="w-3 h-3 text-pink-600" />
@@ -124,14 +124,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <>
                 <button
                   onClick={() => onNavigate('attendance')}
-                  className="px-4 py-2.5 bg-pink-600 hover:bg-pink-700 text-white font-bold text-xs lg:text-sm rounded-xl shadow-md shadow-pink-600/20 active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
+                  className="px-4 py-2.5 bg-linear-to-r from-rose-400 to-pink-500 hover:from-rose-500 hover:to-pink-600 text-white font-bold text-xs lg:text-sm rounded-xl shadow-md shadow-pink-500/20 active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
                 >
                   <CalendarCheck className="w-4 h-4" />
                   <span>Điểm danh ngay</span>
                 </button>
                 <button
                   onClick={() => onNavigate('students')}
-                  className="px-4 py-2.5 bg-white hover:bg-pink-50 text-pink-700 font-semibold text-xs lg:text-sm rounded-xl border border-pink-200 shadow-xs active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
+                  className="px-4 py-2.5 bg-white hover:bg-pink-50 text-pink-700 font-semibold text-xs lg:text-sm rounded-xl border border-pink-200/80 shadow-xs active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
                 >
                   <Users className="w-4 h-4 text-pink-600" />
                   <span>Quản lý học sinh</span>

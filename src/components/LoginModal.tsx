@@ -146,26 +146,26 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-950/75 backdrop-blur-xs animate-fadeIn">
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden border border-pink-200 flex flex-col">
-        {/* Header banner với tông màu hồng trang trọng */}
-        <div className="bg-linear-to-br from-pink-600 via-rose-600 to-pink-700 text-white p-6 sm:p-7 text-center relative overflow-hidden">
-          <div className="absolute top-0 right-0 -mr-6 -mt-6 w-32 h-32 bg-white/10 rounded-full blur-xl pointer-events-none" />
-          <div className="absolute bottom-0 left-0 -ml-6 -mb-6 w-28 h-28 bg-pink-400/20 rounded-full blur-lg pointer-events-none" />
+      <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden border border-pink-200/80 flex flex-col">
+        {/* Header banner với tông màu hồng phấn nhạt nhẹ nhàng, thanh lịch như mẫu */}
+        <div className="bg-linear-to-b from-[#fdf2f4] via-[#fce8ed] to-[#fadce4] text-gray-900 p-6 sm:p-7 text-center relative overflow-hidden border-b border-pink-200/70">
+          <div className="absolute top-0 right-0 -mr-6 -mt-6 w-32 h-32 bg-white/40 rounded-full blur-xl pointer-events-none" />
+          <div className="absolute bottom-0 left-0 -ml-6 -mb-6 w-28 h-28 bg-pink-300/20 rounded-full blur-lg pointer-events-none" />
 
-          {/* Biểu tượng hình nón tú tài trên nền hồng */}
-          <div className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 shadow-inner">
-            <GraduationCap className="w-8 h-8 text-white stroke-[2.2]" />
+          {/* Biểu tượng hình nón tú tài trên nền hồng phấn */}
+          <div className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-white text-pink-600 shadow-sm border border-pink-200/80 flex items-center justify-center ring-2 ring-pink-100/80">
+            <GraduationCap className="w-8 h-8 text-pink-600 stroke-[2.2]" />
           </div>
 
-          <h2 className="text-2xl font-black tracking-tight text-white">
+          <h2 className="text-2xl font-black tracking-tight text-gray-900">
             {appName || 'Sổ Chủ Nhiệm Điện Tử'}
           </h2>
-          <p className="text-xs text-pink-100/90 mt-1 font-medium">
+          <p className="text-xs text-gray-600 mt-1 font-medium">
             Hệ thống Quản lý Nề nếp & Học tập Lớp học Toàn diện
           </p>
 
           {/* Role selector tabs */}
-          <div className="grid grid-cols-2 gap-1.5 p-1 bg-black/20 backdrop-blur-md rounded-2xl mt-5 border border-white/10">
+          <div className="grid grid-cols-2 gap-1.5 p-1 bg-white/70 backdrop-blur-md rounded-2xl mt-5 border border-pink-200/80 shadow-2xs">
             <button
               type="button"
               onClick={() => {
@@ -174,11 +174,11 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               }}
               className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                 activeTab === 'teacher'
-                  ? 'bg-white text-pink-900 shadow-sm'
-                  : 'text-pink-100 hover:text-white hover:bg-white/10'
+                  ? 'bg-white text-pink-800 shadow-xs border border-pink-200/60'
+                  : 'text-gray-600 hover:text-pink-700 hover:bg-white/50'
               }`}
             >
-              <ShieldCheck className="w-3.5 h-3.5" />
+              <ShieldCheck className="w-3.5 h-3.5 text-pink-600" />
               <span>Giáo Viên</span>
             </button>
             <button
@@ -189,18 +189,18 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               }}
               className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                 activeTab === 'student'
-                  ? 'bg-white text-pink-900 shadow-sm'
-                  : 'text-pink-100 hover:text-white hover:bg-white/10'
+                  ? 'bg-white text-pink-800 shadow-xs border border-pink-200/60'
+                  : 'text-gray-600 hover:text-pink-700 hover:bg-white/50'
               }`}
             >
-              <User className="w-3.5 h-3.5" />
+              <User className="w-3.5 h-3.5 text-pink-600" />
               <span>Học Sinh / Phụ Huynh</span>
             </button>
           </div>
         </div>
 
         {/* Content body */}
-        <div className="p-6 sm:p-7 bg-pink-50/20">
+        <div className="p-6 sm:p-7 bg-[#fffbfa]">
           {activeTab === 'teacher' ? (
             <form onSubmit={handleTeacherSubmit} className="space-y-4">
               <div>
@@ -219,7 +219,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                       setTeacherError('');
                     }}
                     placeholder="Nhập mật khẩu (Mặc định: 123)"
-                    className="w-full pl-10 pr-4 py-3 bg-white border border-pink-200 rounded-2xl text-sm font-medium text-gray-800 placeholder-gray-400 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all shadow-xs"
+                    className="w-full pl-10 pr-4 py-3 bg-white border border-pink-200/80 rounded-2xl text-sm font-medium text-gray-800 placeholder-gray-400 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-pink-400 focus:border-pink-400 transition-all shadow-xs"
                     autoFocus
                   />
                 </div>
@@ -244,7 +244,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
               <button
                 type="submit"
-                className="w-full py-3.5 px-4 bg-linear-to-r from-pink-600 to-rose-600 hover:from-pink-700 hover:to-rose-700 active:scale-95 text-white font-bold text-sm rounded-2xl shadow-lg shadow-pink-600/30 transition-all flex items-center justify-center gap-2 group cursor-pointer"
+                className="w-full py-3.5 px-4 bg-linear-to-r from-rose-400 to-pink-500 hover:from-rose-500 hover:to-pink-600 active:scale-95 text-white font-bold text-sm rounded-2xl shadow-md shadow-pink-500/20 transition-all flex items-center justify-center gap-2 group cursor-pointer"
               >
                 <span>Đăng nhập quyền Quản lý</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -253,7 +253,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           ) : (
             <div className="space-y-4">
               {/* Lời nhắc quan trọng: Tài khoản và mật khẩu là ngày sinh */}
-              <div className="p-3 bg-pink-100/70 border border-pink-200 rounded-2xl text-[11.5px] text-pink-900 space-y-1">
+              <div className="p-3 bg-pink-50/80 border border-pink-200/70 rounded-2xl text-[11.5px] text-pink-900 space-y-1">
                 <div className="font-bold flex items-center gap-1.5 text-pink-800">
                   <Sparkles className="w-3.5 h-3.5 text-pink-600" />
                   <span>Quy định đăng nhập học sinh:</span>
@@ -355,7 +355,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
                   <button
                     type="submit"
-                    className="w-full py-3.5 px-4 bg-linear-to-r from-pink-600 to-rose-600 hover:from-pink-700 hover:to-rose-700 active:scale-95 text-white font-bold text-sm rounded-2xl shadow-lg shadow-pink-600/30 transition-all flex items-center justify-center gap-2 group cursor-pointer"
+                    className="w-full py-3.5 px-4 bg-linear-to-r from-rose-400 to-pink-500 hover:from-rose-500 hover:to-pink-600 active:scale-95 text-white font-bold text-sm rounded-2xl shadow-md shadow-pink-500/20 transition-all flex items-center justify-center gap-2 group cursor-pointer"
                   >
                     <span>Đăng nhập vào Hồ sơ</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -378,7 +378,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                           value={studentSearch}
                           onChange={(e) => setStudentSearch(e.target.value)}
                           placeholder="Tìm theo tên học sinh..."
-                          className="w-full pl-9 pr-3 py-2 bg-white border border-pink-200 rounded-xl text-xs text-gray-800 focus:outline-hidden focus:ring-1 focus:ring-pink-500"
+                          className="w-full pl-9 pr-3 py-2 bg-white border border-pink-200/80 rounded-xl text-xs text-gray-800 focus:outline-hidden focus:ring-1 focus:ring-pink-400"
                         />
                       </div>
                     )}
@@ -388,7 +388,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                         setSelectedStudentId(e.target.value);
                         setStudentError('');
                       }}
-                      className="w-full px-3.5 py-2.5 bg-white border border-pink-200 rounded-xl text-sm font-semibold text-gray-800 focus:outline-hidden focus:ring-2 focus:ring-pink-500 transition-all"
+                      className="w-full px-3.5 py-2.5 bg-white border border-pink-200/80 rounded-xl text-sm font-semibold text-gray-800 focus:outline-hidden focus:ring-2 focus:ring-pink-400 transition-all"
                     >
                       {filteredStudents.length === 0 ? (
                         <option value="">Không tìm thấy học sinh</option>
@@ -416,7 +416,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                           setStudentError('');
                         }}
                         placeholder="Nhập ngày sinh (VD: 15/05/2012)"
-                        className="w-full px-3.5 py-2.5 bg-white border border-pink-200 rounded-xl text-sm font-semibold text-gray-800 placeholder-gray-400 focus:outline-hidden focus:ring-2 focus:ring-pink-500 transition-all shadow-2xs"
+                        className="w-full px-3.5 py-2.5 bg-white border border-pink-200/80 rounded-xl text-sm font-semibold text-gray-800 placeholder-gray-400 focus:outline-hidden focus:ring-2 focus:ring-pink-400 transition-all shadow-2xs"
                       />
                     </div>
                   </div>
@@ -429,7 +429,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
                   <button
                     type="submit"
-                    className="w-full py-3.5 px-4 bg-linear-to-r from-pink-600 to-rose-600 hover:from-pink-700 hover:to-rose-700 active:scale-95 text-white font-bold text-sm rounded-2xl shadow-lg shadow-pink-600/30 transition-all flex items-center justify-center gap-2 group cursor-pointer"
+                    className="w-full py-3.5 px-4 bg-linear-to-r from-rose-400 to-pink-500 hover:from-rose-500 hover:to-pink-600 active:scale-95 text-white font-bold text-sm rounded-2xl shadow-md shadow-pink-500/20 transition-all flex items-center justify-center gap-2 group cursor-pointer"
                   >
                     <span>Xem Hồ sơ Cá nhân</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

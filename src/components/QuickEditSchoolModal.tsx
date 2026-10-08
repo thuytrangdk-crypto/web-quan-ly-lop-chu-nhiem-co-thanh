@@ -66,17 +66,17 @@ export const QuickEditSchoolModal: React.FC<QuickEditSchoolModalProps> = ({
         className="w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden border border-pink-200"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header with Light Pink Theme */}
-        <div className="bg-linear-to-r from-pink-100 via-rose-100 to-pink-50 p-6 text-gray-900 border-b border-pink-200 relative">
+        {/* Header with Light Pink Theme (Màu hồng phấn nhạt như mẫu) */}
+        <div className="bg-linear-to-r from-[#fff1f5] via-[#fdf2f7] to-[#fff8fa] p-6 text-gray-900 border-b border-pink-100/90 relative">
           <button
             onClick={onClose}
-            className="absolute top-5 right-5 p-2 rounded-xl bg-white/80 hover:bg-white text-gray-600 hover:text-gray-900 border border-pink-200 shadow-2xs transition-all cursor-pointer"
+            className="absolute top-5 right-5 p-2 rounded-xl bg-white/90 hover:bg-white text-gray-600 hover:text-gray-900 border border-pink-200/60 shadow-2xs transition-all cursor-pointer"
             title="Đóng"
           >
             <X className="w-4 h-4" />
           </button>
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-white text-pink-600 flex items-center justify-center border border-pink-200 shadow-xs">
+            <div className="w-12 h-12 rounded-2xl bg-white text-pink-600 flex items-center justify-center border border-pink-200/80 shadow-xs ring-2 ring-pink-100/60">
               <School className="w-6 h-6" />
             </div>
             <div>
@@ -165,7 +165,7 @@ export const QuickEditSchoolModal: React.FC<QuickEditSchoolModalProps> = ({
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 rounded-xl text-xs font-bold bg-linear-to-r from-pink-600 to-rose-600 hover:from-pink-700 hover:to-rose-700 active:scale-95 text-white shadow-md shadow-pink-500/25 flex items-center gap-1.5 transition-all cursor-pointer"
+              className="px-5 py-2.5 rounded-xl text-xs font-bold bg-linear-to-r from-rose-400 to-pink-500 hover:from-rose-500 hover:to-pink-600 active:scale-95 text-white shadow-md shadow-pink-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
             >
               <Check className="w-4 h-4" />
               <span>Lưu Thông Tin Ngay</span>
