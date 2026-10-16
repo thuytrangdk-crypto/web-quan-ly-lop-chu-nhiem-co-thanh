@@ -156,7 +156,7 @@ export const ClassSwitchModal: React.FC<ClassSwitchModalProps> = ({
               type="text"
               value={teacher}
               onChange={(e) => setTeacher(e.target.value)}
-              placeholder="Cô Thùy Trang"
+              placeholder="VD: Cô Lê Thị Kim Thanh"
               className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-hidden focus:ring-1 focus:ring-rose-500"
             />
           </div>

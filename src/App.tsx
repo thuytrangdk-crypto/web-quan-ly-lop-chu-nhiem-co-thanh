@@ -30,6 +30,34 @@ import { CheckCircle2, AlertCircle } from 'lucide-react';
 const STORAGE_KEY = 'so_chu_nhiem_8a3_data';
 const SESSION_AUTH_KEY = 'scn_session_auth';
 
+const getTeacherSignature = (teacherName?: string) => {
+  const t = (teacherName || '').trim();
+  if (!t) return 'GVCN';
+  if (
+    t.toLowerCase().startsWith('cô ') ||
+    t.toLowerCase().startsWith('thầy ') ||
+    t.toLowerCase().startsWith('gvcn ')
+  ) {
+    return t.toLowerCase().startsWith('gvcn ') ? t : `GVCN ${t}`;
+  }
+  return `GVCN Cô ${t}`;
+};
+
+const normalizeTeacherNotices = (notices: BoardNotice[], teacherName?: string): BoardNotice[] => {
+  const sig = getTeacherSignature(teacherName);
+  return (notices || []).map((n) => {
+    if (
+      !n.author ||
+      n.author === 'GVCN' ||
+      n.author.includes('Thùy Trang') ||
+      n.author.toLowerCase().startsWith('gvcn cô')
+    ) {
+      return { ...n, author: sig };
+    }
+    return n;
+  });
+};
+
 interface ToastItem {
   id: string;
   msg: string;
@@ -43,6 +71,7 @@ export default function App() {
       if (stored) {
         const parsed = JSON.parse(stored);
         if (parsed && parsed.config && Array.isArray(parsed.students)) {
+          const currentTeacher = parsed.config.teacherName || DEFAULT_INITIAL_STATE.config.teacherName;
           return {
             ...DEFAULT_INITIAL_STATE,
             ...parsed,
@@ -50,6 +79,10 @@ export default function App() {
               ...DEFAULT_INITIAL_STATE.config,
               ...parsed.config,
             },
+            boardNotices: normalizeTeacherNotices(
+              parsed.boardNotices || DEFAULT_INITIAL_STATE.boardNotices,
+              currentTeacher
+            ),
           };
         }
       }
@@ -152,6 +185,8 @@ export default function App() {
         // Load remote data
         const { state: remoteState } = await supabaseService.loadState();
         if (remoteState && remoteState.students) {
+          const currentTeacher = remoteState.config?.teacherName || state.config.teacherName || 'Cô Lê Thị Kim Thanh';
+          const normalizedNotices = normalizeTeacherNotices(remoteState.boardNotices || [], currentTeacher);
           setState((prev) => ({
             ...prev,
             ...remoteState,
@@ -159,6 +194,7 @@ export default function App() {
               ...prev.config,
               ...remoteState.config,
             },
+            boardNotices: normalizedNotices,
           }));
           setSyncStatus((prev) => ({
             ...prev,
@@ -208,6 +244,27 @@ export default function App() {
 
     return () => clearTimeout(timer);
   }, [state, syncStatus.isTableReady]);
+
+  // Auto-clean any legacy notices with old teacher author name
+  useEffect(() => {
+    const hasOldAuthor = state.boardNotices.some(
+      (n) => n.author && n.author.includes('Thùy Trang')
+    );
+    if (hasOldAuthor) {
+      const normalizedNotices = normalizeTeacherNotices(
+        state.boardNotices,
+        state.config.teacherName
+      );
+      setState((prev) => {
+        const nextState = {
+          ...prev,
+          boardNotices: normalizedNotices,
+        };
+        persistStateImmediately(nextState);
+        return nextState;
+      });
+    }
+  }, [state.config.teacherName, state.boardNotices]);
 
   const handleCheckSupabaseConnection = async () => {
     const res = await supabaseService.checkConnection();
@@ -264,16 +321,21 @@ export default function App() {
     teacherName: string;
     availableClasses: string[];
   }) => {
-    setState((prev) => ({
-      ...prev,
-      config: {
-        ...prev.config,
-        className: data.className,
-        schoolYear: data.schoolYear,
-        teacherName: data.teacherName,
-        availableClasses: data.availableClasses,
-      },
-    }));
+    setState((prev) => {
+      const nextState: AppState = {
+        ...prev,
+        config: {
+          ...prev.config,
+          className: data.className,
+          schoolYear: data.schoolYear,
+          teacherName: data.teacherName,
+          availableClasses: data.availableClasses,
+        },
+        boardNotices: normalizeTeacherNotices(prev.boardNotices, data.teacherName),
+      };
+      persistStateImmediately(nextState);
+      return nextState;
+    });
     showToast(`Đã chuyển sang Lớp ${data.className} (Năm học ${data.schoolYear})`);
   };
 
@@ -283,16 +345,21 @@ export default function App() {
     schoolYear: string;
     teacherName: string;
   }) => {
-    setState((prev) => ({
-      ...prev,
-      config: {
-        ...prev.config,
-        schoolName: data.schoolName,
-        className: data.className,
-        schoolYear: data.schoolYear,
-        teacherName: data.teacherName,
-      },
-    }));
+    setState((prev) => {
+      const nextState: AppState = {
+        ...prev,
+        config: {
+          ...prev.config,
+          schoolName: data.schoolName,
+          className: data.className,
+          schoolYear: data.schoolYear,
+          teacherName: data.teacherName,
+        },
+        boardNotices: normalizeTeacherNotices(prev.boardNotices, data.teacherName),
+      };
+      persistStateImmediately(nextState);
+      return nextState;
+    });
     showToast(`Đã cập nhật: ${data.schoolName} - Lớp ${data.className} (${data.schoolYear})`);
   };
 
@@ -736,12 +803,16 @@ export default function App() {
   // Config & Reset Handlers
   const handleUpdateConfig = (newConfig: Partial<AppState['config']>) => {
     setState((prev) => {
+      const updatedTeacher = newConfig.teacherName || prev.config.teacherName;
       const nextState: AppState = {
         ...prev,
         config: {
           ...prev.config,
           ...newConfig,
         },
+        boardNotices: newConfig.teacherName
+          ? normalizeTeacherNotices(prev.boardNotices, updatedTeacher)
+          : prev.boardNotices,
       };
       persistStateImmediately(nextState);
       return nextState;

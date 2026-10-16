@@ -39,6 +39,33 @@ export const BoardView: React.FC<BoardViewProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'notices' | 'seating'>('notices');
 
+  // Format teacher signature dynamically based on current teacher name
+  const getTeacherSignature = (teacherName?: string) => {
+    const t = (teacherName || '').trim();
+    if (!t) return 'GVCN';
+    if (
+      t.toLowerCase().startsWith('cô ') ||
+      t.toLowerCase().startsWith('thầy ') ||
+      t.toLowerCase().startsWith('gvcn ')
+    ) {
+      return t.toLowerCase().startsWith('gvcn ') ? t : `GVCN ${t}`;
+    }
+    return `GVCN Cô ${t}`;
+  };
+
+  const formatNoticeAuthor = (author?: string) => {
+    if (!author) return getTeacherSignature(state.config.teacherName);
+    // If notice author mentions old name 'Thùy Trang' or is any GVCN signature, synchronize with current teacher
+    if (
+      author.includes('Thùy Trang') ||
+      author.toLowerCase().startsWith('gvcn') ||
+      author === 'GVCN'
+    ) {
+      return getTeacherSignature(state.config.teacherName);
+    }
+    return author;
+  };
+
   // Notice creation modal
   const [isAddNoticeOpen, setIsAddNoticeOpen] = useState(false);
   const [noticeForm, setNoticeForm] = useState<{
@@ -52,7 +79,7 @@ export const BoardView: React.FC<BoardViewProps> = ({
     content: '',
     priority: 'normal',
     pinned: false,
-    author: `GVCN Cô ${state.config.teacherName}`,
+    author: getTeacherSignature(state.config.teacherName),
   });
 
   // Seating assignment modal
@@ -65,11 +92,11 @@ export const BoardView: React.FC<BoardViewProps> = ({
       return;
     }
     onAddNotice({
-      title: noticeForm.title,
-      content: noticeForm.content,
+      title: noticeForm.title.trim(),
+      content: noticeForm.content.trim(),
       priority: noticeForm.priority,
       pinned: noticeForm.pinned,
-      author: noticeForm.author,
+      author: noticeForm.author.trim() || getTeacherSignature(state.config.teacherName),
       date: getTodayStr(),
     });
     setIsAddNoticeOpen(false);
@@ -78,7 +105,7 @@ export const BoardView: React.FC<BoardViewProps> = ({
       content: '',
       priority: 'normal',
       pinned: false,
-      author: `GVCN Cô ${state.config.teacherName}`,
+      author: getTeacherSignature(state.config.teacherName),
     });
   };
 
@@ -172,7 +199,16 @@ export const BoardView: React.FC<BoardViewProps> = ({
 
           {activeTab === 'notices' && isTeacher && (
             <button
-              onClick={() => setIsAddNoticeOpen(true)}
+              onClick={() => {
+                setNoticeForm({
+                  title: '',
+                  content: '',
+                  priority: 'normal',
+                  pinned: false,
+                  author: getTeacherSignature(state.config.teacherName),
+                });
+                setIsAddNoticeOpen(true);
+              }}
               className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
             >
               <PlusCircle className="w-4 h-4" />
@@ -268,7 +304,7 @@ export const BoardView: React.FC<BoardViewProps> = ({
                   <div className="pt-3 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-400 font-medium">
                     <span className="flex items-center gap-1">
                       <User className="w-3 h-3" />
-                      <span>{n.author || 'GVCN'}</span>
+                      <span>{formatNoticeAuthor(n.author)}</span>
                     </span>
                     <span className="flex items-center gap-1">
                       <Calendar className="w-3 h-3" />

@@ -663,7 +663,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       type="text"
                       value={formConfig.teacherName}
                       onChange={(e) => setFormConfig({ ...formConfig, teacherName: e.target.value })}
-                      placeholder="VD: Cô Nguyễn Thị Thùy Trang"
+                      placeholder="VD: Cô Lê Thị Kim Thanh"
                       className="w-full px-3.5 py-2.5 bg-pink-50/30 border border-pink-200 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-pink-500 font-semibold text-gray-800"
                     />
                   </div>

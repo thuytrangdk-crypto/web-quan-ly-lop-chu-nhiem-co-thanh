@@ -28,7 +28,7 @@ export const DEFAULT_INITIAL_STATE: AppState = {
     schoolName: 'Trường THCS Chu Văn An',
     className: '8A3',
     schoolYear: '2024 - 2025',
-    teacherName: 'Nguyễn Thị Thùy Trang',
+    teacherName: 'Cô Lê Thị Kim Thanh',
     teacherPassword: '123',
     availableClasses: ['8A3', '9A5', '7A1', '6A2'],
     classAvatar: '',
@@ -282,7 +282,7 @@ export const DEFAULT_INITIAL_STATE: AppState = {
       date: today,
       title: 'Nhắc nhở học tập',
       content: 'Nhắc nhở em Huy chuẩn bị bài tập môn KHTN đầy đủ trước khi lên lớp.',
-      author: 'Cô Thùy Trang',
+      author: 'Cô Lê Thị Kim Thanh',
     },
     {
       id: 'note_02',
@@ -290,7 +290,7 @@ export const DEFAULT_INITIAL_STATE: AppState = {
       date: today,
       title: 'Tuyên dương học tập',
       content: 'Em Mai Anh hỗ trợ bạn Huy và Khôi ôn tập môn Toán giữa kỳ rất hiệu quả.',
-      author: 'Cô Thùy Trang',
+      author: 'Cô Lê Thị Kim Thanh',
     },
   ],
   boardNotices: [
@@ -302,7 +302,7 @@ export const DEFAULT_INITIAL_STATE: AppState = {
       date: today,
       priority: 'high',
       pinned: true,
-      author: 'GVCN Cô Thùy Trang',
+      author: 'GVCN Cô Lê Thị Kim Thanh',
     },
     {
       id: 'bn_02',
@@ -312,7 +312,7 @@ export const DEFAULT_INITIAL_STATE: AppState = {
       date: today,
       priority: 'normal',
       pinned: true,
-      author: 'GVCN Cô Thùy Trang',
+      author: 'GVCN Cô Lê Thị Kim Thanh',
     },
     {
       id: 'bn_03',

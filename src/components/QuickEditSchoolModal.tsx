@@ -52,7 +52,7 @@ export const QuickEditSchoolModal: React.FC<QuickEditSchoolModalProps> = ({
       schoolName: formData.schoolName.trim() || 'Trường THCS Chu Văn An',
       className: formData.className.trim(),
       schoolYear: formData.schoolYear.trim() || '2024 - 2025',
-      teacherName: formData.teacherName.trim() || 'Nguyễn Thị Thùy Trang',
+      teacherName: formData.teacherName.trim() || 'Cô Lê Thị Kim Thanh',
     });
     onClose();
   };
@@ -150,7 +150,7 @@ export const QuickEditSchoolModal: React.FC<QuickEditSchoolModalProps> = ({
               required
               value={formData.teacherName}
               onChange={(e) => setFormData({ ...formData, teacherName: e.target.value })}
-              placeholder="VD: Cô Nguyễn Thị Thùy Trang"
+              placeholder="VD: Cô Lê Thị Kim Thanh"
               className="w-full px-4 py-3 bg-white border border-pink-200 rounded-2xl text-sm font-semibold text-gray-800 placeholder-gray-400 focus:outline-hidden focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all shadow-xs"
             />
           </div>
