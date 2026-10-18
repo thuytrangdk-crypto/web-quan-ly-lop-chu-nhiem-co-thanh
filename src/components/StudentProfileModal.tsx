@@ -1,6 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import {
   AppState,
+  ConductGrade,
   DisciplineRecord,
   NoteRecord,
   Student,
@@ -38,6 +39,10 @@ import {
   SUBJECT_LIST,
 } from '../utils/helpers';
 import { DEFAULT_DISCIPLINE_RULES } from '../defaultData';
+import {
+  getEmulationConfigForClass,
+  evaluateStudentEmulation,
+} from '../utils/emulationEvaluation';
 
 interface StudentProfileModalProps {
   studentId: string;
@@ -138,14 +143,43 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
     return displayedDiscipline.reduce((sum, d) => sum + (d.points || 0), 0);
   }, [displayedDiscipline]);
 
-  // Evaluation conduct rank based on period net points
-  const periodConduct = React.useMemo(() => {
-    if (periodNetPoints <= -15) return { label: 'Yếu', color: 'text-red-600' };
-    if (periodNetPoints < 0) return { label: 'Chưa đạt', color: 'text-rose-600' };
-    if (periodNetPoints < 15) return { label: 'Đạt', color: 'text-amber-600' };
-    if (periodNetPoints < 30) return { label: 'Khá', color: 'text-blue-600' };
-    return { label: 'Tốt', color: 'text-emerald-600' };
-  }, [periodNetPoints]);
+  // Active emulation config for current class & year
+  const activeEmulationConfig = React.useMemo(() => {
+    return getEmulationConfigForClass(
+      state.classEmulationConfigs,
+      state.emulationConfig,
+      state.config.className,
+      state.config.schoolYear
+    );
+  }, [state.classEmulationConfigs, state.emulationConfig, state.config.className, state.config.schoolYear]);
+
+  // Evaluate student emulation using configured scale and conduct tiers
+  const studentEmulation = React.useMemo(() => {
+    return evaluateStudentEmulation(student.id, displayedDiscipline, activeEmulationConfig);
+  }, [student.id, displayedDiscipline, activeEmulationConfig]);
+
+  // Official conduct evaluation modal & form state
+  const [isOfficialModalOpen, setIsOfficialModalOpen] = useState(false);
+  const [officialRating, setOfficialRating] = useState<ConductGrade>(
+    student.officialConduct?.rating || (studentEmulation.suggestedRating as ConductGrade)
+  );
+  const [officialReason, setOfficialReason] = useState(student.officialConduct?.reason || '');
+
+  const handleConfirmOfficialConduct = (e: React.FormEvent) => {
+    e.preventDefault();
+    const updatedStudent: Student = {
+      ...student,
+      officialConduct: {
+        rating: officialRating,
+        reason: officialReason.trim() || undefined,
+        confirmedBy: state.config.teacherName || 'GVCN',
+        confirmedAt: new Date().toLocaleString('vi-VN'),
+      },
+    };
+    onEditStudent(updatedStudent);
+    setIsOfficialModalOpen(false);
+    onShowToast(`Đã xác nhận kết quả đánh giá rèn luyện chính thức: ${officialRating}!`);
+  };
 
   // Personal attendance records
   const personalAttendance = state.attendance.filter(
@@ -700,56 +734,122 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
 
               {/* CỘT BÊN PHẢI: Kỳ đánh giá tổng điểm & Lịch sử sự việc */}
               <div className="flex-1 min-w-0 flex flex-col gap-3 sm:gap-4 overflow-hidden">
-                {/* 1. Thẻ Kỳ đánh giá (Tháng) & Điểm hạnh kiểm cố định trên cùng */}
-                <div className="bg-linear-to-r from-gray-50 via-pink-50/30 to-gray-50 rounded-2xl border border-gray-200/90 p-3.5 sm:p-4 flex items-center justify-between gap-4 shrink-0 shadow-2xs">
-                  {/* KỲ ĐÁNH GIÁ (THÁNG) */}
-                  <div className="space-y-1">
-                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                      KỲ ĐÁNH GIÁ (THÁNG)
-                    </label>
-                    <select
-                      value={selectedMonth}
-                      onChange={(e) => setSelectedMonth(e.target.value)}
-                      className="px-3 py-1.5 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm font-bold text-gray-800 shadow-2xs focus:outline-hidden focus:ring-2 focus:ring-pink-400 cursor-pointer"
-                    >
-                      {availableMonths.map((m) => {
-                        const [year, month] = m.split('-');
-                        return (
-                          <option key={m} value={m}>
-                            Tháng {month}/{year}
-                          </option>
-                        );
-                      })}
-                      <option value="all">Tất cả các tháng</option>
-                    </select>
+                {/* 1. Thẻ Kỳ đánh giá (Tháng), Điểm thi đua & Xếp loại gợi ý rèn luyện */}
+                <div className="bg-linear-to-r from-gray-50 via-pink-50/30 to-gray-50 rounded-2xl border border-gray-200/90 p-3.5 sm:p-4 flex flex-col gap-3 shrink-0 shadow-2xs">
+                  <div className="flex items-center justify-between gap-4 flex-wrap">
+                    {/* KỲ ĐÁNH GIÁ (THÁNG) */}
+                    <div className="space-y-1">
+                      <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                        KỲ ĐÁNH GIÁ (THÁNG)
+                      </label>
+                      <select
+                        value={selectedMonth}
+                        onChange={(e) => setSelectedMonth(e.target.value)}
+                        className="px-3 py-1.5 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm font-bold text-gray-800 shadow-2xs focus:outline-hidden focus:ring-2 focus:ring-pink-400 cursor-pointer"
+                      >
+                        {availableMonths.map((m) => {
+                          const [year, month] = m.split('-');
+                          return (
+                            <option key={m} value={m}>
+                              Tháng {month}/{year}
+                            </option>
+                          );
+                        })}
+                        <option value="all">Tất cả các tháng</option>
+                      </select>
+                    </div>
+
+                    {/* ĐIỂM THI ĐUA */}
+                    <div className="text-right sm:text-center space-y-0.5">
+                      <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                        ĐIỂM THI ĐUA
+                      </div>
+                      <div className="text-xl sm:text-2xl font-black text-gray-900 flex items-center justify-end sm:justify-center gap-1.5">
+                        <span>{studentEmulation.finalTotalPoints}đ</span>
+                        <span
+                          className={`text-xs font-bold px-1.5 py-0.5 rounded-md ${
+                            periodNetPoints >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
+                          }`}
+                          title={`Điểm nền: ${studentEmulation.initialPoints}đ, Tổng cộng/trừ: ${periodNetPoints >= 0 ? `+${periodNetPoints}` : periodNetPoints}đ`}
+                        >
+                          ({studentEmulation.initialPoints}{periodNetPoints >= 0 ? ` +${periodNetPoints}` : ` ${periodNetPoints}`})
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* XẾP LOẠI GỢI Ý THEO THI ĐUA */}
+                    <div className="text-right space-y-0.5">
+                      <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                        Xếp loại gợi ý theo thi đua
+                      </div>
+                      <div>
+                        <span
+                          className={`inline-block px-3 py-1 rounded-xl text-xs sm:text-sm font-black border ${
+                            studentEmulation.suggestedRating === 'Tốt'
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                              : studentEmulation.suggestedRating === 'Khá'
+                              ? 'bg-blue-50 text-blue-700 border-blue-200'
+                              : studentEmulation.suggestedRating === 'Đạt'
+                              ? 'bg-amber-50 text-amber-700 border-amber-200'
+                              : 'bg-rose-50 text-rose-700 border-rose-200'
+                          }`}
+                        >
+                          {studentEmulation.suggestedRating}
+                        </span>
+                      </div>
+                    </div>
                   </div>
 
-                  {/* TỔNG ĐIỂM */}
-                  <div className="text-right sm:text-center space-y-0.5">
-                    <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                      TỔNG ĐIỂM
+                  {/* Cảnh báo hạ bậc nếu vi phạm điều kiện bổ sung */}
+                  {studentEmulation.isDowngraded && studentEmulation.downgradeReason && (
+                    <div className="text-[11px] text-amber-800 bg-amber-50/90 border border-amber-200/90 rounded-xl px-3 py-1.5 flex items-center gap-2">
+                      <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                      <span>{studentEmulation.downgradeReason}</span>
                     </div>
-                    <div
-                      className={`text-2xl sm:text-3xl font-black ${
-                        periodNetPoints < 0
-                          ? 'text-red-600'
-                          : periodNetPoints > 0
-                          ? 'text-emerald-600'
-                          : 'text-gray-700'
-                      }`}
-                    >
-                      {periodNetPoints > 0 ? `+${periodNetPoints}` : periodNetPoints}
-                    </div>
-                  </div>
+                  )}
 
-                  {/* HẠNH KIỂM */}
-                  <div className="text-right space-y-0.5">
-                    <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                      HẠNH KIỂM
+                  {/* Mục Kết quả đánh giá rèn luyện chính thức do giáo viên xác nhận */}
+                  <div className="pt-2.5 border-t border-gray-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-bold text-gray-700">Đánh giá rèn luyện chính thức:</span>
+                      {student.officialConduct ? (
+                        <span
+                          className={`px-2.5 py-0.5 rounded-lg font-black border text-xs ${
+                            student.officialConduct.rating === 'Tốt'
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                              : student.officialConduct.rating === 'Khá'
+                              ? 'bg-blue-50 text-blue-700 border-blue-200'
+                              : student.officialConduct.rating === 'Đạt'
+                              ? 'bg-amber-50 text-amber-700 border-amber-200'
+                              : 'bg-rose-50 text-rose-700 border-rose-200'
+                          }`}
+                        >
+                          {student.officialConduct.rating}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400 italic">Chưa xác nhận (chờ GVCN)</span>
+                      )}
+                      {student.officialConduct?.reason && (
+                        <span className="text-gray-500 text-[11px] max-w-xs truncate" title={student.officialConduct.reason}>
+                          - {student.officialConduct.reason}
+                        </span>
+                      )}
                     </div>
-                    <div className={`text-base sm:text-xl font-black ${periodConduct.color}`}>
-                      {periodConduct.label}
-                    </div>
+
+                    {isTeacher && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setOfficialRating(student.officialConduct?.rating || (studentEmulation.suggestedRating as ConductGrade));
+                          setOfficialReason(student.officialConduct?.reason || '');
+                          setIsOfficialModalOpen(true);
+                        }}
+                        className="px-2.5 py-1 rounded-lg bg-pink-50 hover:bg-pink-100 text-pink-700 font-bold text-xs border border-pink-200/70 transition-all cursor-pointer self-start sm:self-auto flex items-center gap-1 active:scale-95"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>{student.officialConduct ? 'Điều chỉnh chính thức' : 'Xác nhận chính thức'}</span>
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -1044,6 +1144,100 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
           </span>
         </div>
       </div>
+
+      {/* MODAL XÁC NHẬN / ĐIỀU CHỈNH ĐÁNH GIÁ RÈN LUYỆN CHÍNH THỨC */}
+      {isOfficialModalOpen && (
+        <div className="fixed inset-0 z-60 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-gray-200 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-pink-100 text-pink-600 flex items-center justify-center font-bold">
+                  <Award className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-gray-900">
+                    Đánh Giá Rèn Luyện Chính Thức
+                  </h3>
+                  <p className="text-xs text-gray-500">
+                    Học sinh: <strong>{student.name}</strong> ({student.id})
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsOfficialModalOpen(false)}
+                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-3 bg-pink-50/60 rounded-2xl border border-pink-200/60 text-xs space-y-1">
+              <div className="text-gray-700 font-medium">
+                Gợi ý từ điểm thi đua: <strong className="text-pink-700 font-bold">{studentEmulation.suggestedRating}</strong> ({studentEmulation.finalTotalPoints} điểm)
+              </div>
+              <p className="text-[11px] text-gray-500">
+                Lưu ý: Điểm thi đua chỉ mang tính gợi ý. Kết quả rèn luyện chính thức do giáo viên chủ nhiệm xem xét toàn diện và chịu trách nhiệm xác nhận.
+              </p>
+            </div>
+
+            <form onSubmit={handleConfirmOfficialConduct} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase mb-2">
+                  Mức Xếp Loại Rèn Luyện Chính Thức
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {(['Tốt', 'Khá', 'Đạt', 'Chưa đạt'] as ConductGrade[]).map((grade) => (
+                    <button
+                      key={grade}
+                      type="button"
+                      onClick={() => setOfficialRating(grade)}
+                      className={`py-2.5 px-3 rounded-xl text-xs font-black border transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                        officialRating === grade
+                          ? 'bg-pink-600 text-white border-pink-600 shadow-xs ring-2 ring-pink-300/40'
+                          : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
+                      }`}
+                    >
+                      {officialRating === grade && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
+                      <span>{grade}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
+                  Lý Do Điều Chỉnh / Nhận Xét Của GVCN
+                </label>
+                <textarea
+                  rows={3}
+                  value={officialReason}
+                  onChange={(e) => setOfficialReason(e.target.value)}
+                  placeholder="Nhập lý do điều chỉnh hoặc nhận xét rèn luyện của giáo viên chủ nhiệm..."
+                  className="w-full p-3 bg-gray-50 border border-gray-200 focus:border-pink-400 focus:bg-white rounded-xl text-xs sm:text-sm text-gray-800 focus:outline-hidden focus:ring-2 focus:ring-pink-300/40 transition-all resize-none"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setIsOfficialModalOpen(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 transition-all cursor-pointer"
+                >
+                  Hủy bỏ
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold shadow-md shadow-pink-600/20 transition-all cursor-pointer flex items-center gap-1.5"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  <span>Xác nhận kết quả</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

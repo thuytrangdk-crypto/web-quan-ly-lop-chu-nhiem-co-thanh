@@ -5,6 +5,7 @@ import {
   BoardNotice,
   DisciplineRecord,
   DisciplineRule,
+  EmulationConfig,
   NoteRecord,
   Student,
   UserRole,
@@ -830,6 +831,24 @@ export default function App() {
     });
   };
 
+  const handleUpdateEmulationConfig = (newConfig: EmulationConfig) => {
+    setState((prev) => {
+      const className = prev.config.className || '8A3';
+      const schoolYear = prev.config.schoolYear || '2024 - 2025';
+      const classKey = `${className}_${schoolYear}`;
+      const nextState: AppState = {
+        ...prev,
+        emulationConfig: newConfig,
+        classEmulationConfigs: {
+          ...(prev.classEmulationConfigs || {}),
+          [classKey]: newConfig,
+        },
+      };
+      persistStateImmediately(nextState);
+      return nextState;
+    });
+  };
+
   const handleResetData = () => {
     setState(DEFAULT_INITIAL_STATE);
   };
@@ -1002,6 +1021,7 @@ export default function App() {
                   state={state}
                   onUpdateConfig={handleUpdateConfig}
                   onUpdateDisciplineRules={handleUpdateDisciplineRules}
+                  onUpdateEmulationConfig={handleUpdateEmulationConfig}
                   onResetData={handleResetData}
                   onClearAllData={handleClearAllData}
                   onImportBackup={handleImportBackup}

@@ -1,5 +1,6 @@
 import { AppState, DisciplineRule } from './types';
 import { getTodayStr } from './utils/helpers';
+import { DEFAULT_EMULATION_CONFIG } from './utils/emulationEvaluation';
 
 const today = getTodayStr();
 
@@ -336,4 +337,8 @@ export const DEFAULT_INITIAL_STATE: AppState = {
     'desk_1_3': '14072012',
   },
   disciplineRules: DEFAULT_DISCIPLINE_RULES,
+  emulationConfig: DEFAULT_EMULATION_CONFIG,
+  classEmulationConfigs: {
+    '8A3_2024 - 2025': DEFAULT_EMULATION_CONFIG,
+  },
 };

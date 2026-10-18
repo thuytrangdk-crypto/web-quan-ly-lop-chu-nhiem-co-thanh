@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AppState, DisciplineRule } from '../types';
+import { AppState, DisciplineRule, EmulationConfig } from '../types';
 import {
   Settings,
   Save,
@@ -25,11 +25,13 @@ import {
 } from 'lucide-react';
 import { SyncStatus } from '../services/supabaseService';
 import { DEFAULT_DISCIPLINE_RULES } from '../defaultData';
+import { EmulationScaleSettings } from './EmulationScaleSettings';
 
 interface SettingsViewProps {
   state: AppState;
   onUpdateConfig: (newConfig: Partial<AppState['config']>) => void;
   onUpdateDisciplineRules: (rules: DisciplineRule[]) => void;
+  onUpdateEmulationConfig?: (newConfig: EmulationConfig) => void;
   onResetData: () => void;
   onClearAllData: () => void;
   onImportBackup: (backupState: AppState) => void;
@@ -42,6 +44,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   state,
   onUpdateConfig,
   onUpdateDisciplineRules,
+  onUpdateEmulationConfig,
   onResetData,
   onClearAllData,
   onImportBackup,
@@ -51,6 +54,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 }) => {
   // Navigation tabs matching the user mockup
   const [activeTab, setActiveTab] = useState<'rules' | 'general' | 'cloud' | 'backup'>('rules');
+
+  // Sub-tabs for "Quy tắc thi đua": "Quy tắc cộng/trừ điểm" & "Thang điểm & Xếp loại"
+  const [rulesSubTab, setRulesSubTab] = useState<'rules_list' | 'scale_rating'>('rules_list');
 
   // Form config for "Cài đặt chung"
   const [formConfig, setFormConfig] = useState(state.config);
@@ -222,7 +228,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </p>
         </div>
 
-        {activeTab === 'rules' && (
+        {activeTab === 'rules' && rulesSubTab === 'rules_list' && (
           <div className="flex items-center gap-2.5 shrink-0">
             <button
               onClick={handleResetDefaultRules}
@@ -380,22 +386,62 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           {/* TAB 1: QUY TẮC THI ĐUA (THE USER'S PRIMARY SCREEN) */}
           {activeTab === 'rules' && (
             <div className="space-y-4">
-              {/* Filter, Search & Stats Header */}
-              <div className="bg-white rounded-3xl p-5 sm:p-6 border border-pink-200/80 shadow-xs space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-pink-100">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-9 h-9 rounded-xl bg-pink-100 flex items-center justify-center text-pink-600 shrink-0">
-                      <Scale className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h3 className="text-base sm:text-lg font-black text-gray-900">
-                        Danh Sách Quy Tắc Thi Đua & Nề Nếp
-                      </h3>
-                      <p className="text-xs text-gray-500">
-                        Áp dụng trực tiếp vào danh sách lựa chọn khi giáo viên ghi nhận nề nếp cho học sinh
-                      </p>
-                    </div>
-                  </div>
+              {/* 2 Sub-tabs Bar: “Quy tắc cộng/trừ điểm” & “Thang điểm & Xếp loại” */}
+              <div className="bg-white rounded-2xl p-1.5 border border-pink-200/80 shadow-2xs flex items-center gap-1.5 max-w-lg">
+                <button
+                  type="button"
+                  onClick={() => setRulesSubTab('rules_list')}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 px-3.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                    rulesSubTab === 'rules_list'
+                      ? 'bg-pink-500 text-white shadow-sm shadow-pink-500/20'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/70'
+                  }`}
+                >
+                  <Scale className="w-4 h-4" />
+                  <span>Quy tắc cộng/trừ điểm</span>
+                  <span
+                    className={`text-[10px] px-1.5 py-0.5 rounded-full font-black ${
+                      rulesSubTab === 'rules_list'
+                        ? 'bg-white/20 text-white'
+                        : 'bg-gray-200 text-gray-600'
+                    }`}
+                  >
+                    {currentRules.length}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setRulesSubTab('scale_rating')}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 px-3.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                    rulesSubTab === 'scale_rating'
+                      ? 'bg-pink-500 text-white shadow-sm shadow-pink-500/20'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/70'
+                  }`}
+                >
+                  <Award className="w-4 h-4" />
+                  <span>Thang điểm & Xếp loại</span>
+                </button>
+              </div>
+
+              {rulesSubTab === 'rules_list' ? (
+                <>
+                  {/* Filter, Search & Stats Header */}
+                  <div className="bg-white rounded-3xl p-5 sm:p-6 border border-pink-200/80 shadow-xs space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-pink-100">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-9 h-9 rounded-xl bg-pink-100 flex items-center justify-center text-pink-600 shrink-0">
+                          <Scale className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h3 className="text-base sm:text-lg font-black text-gray-900">
+                            Danh Sách Quy Tắc Thi Đua & Nề Nếp
+                          </h3>
+                          <p className="text-xs text-gray-500">
+                            Áp dụng trực tiếp vào danh sách lựa chọn khi giáo viên ghi nhận nề nếp cho học sinh
+                          </p>
+                        </div>
+                      </div>
 
                   {/* Summary badges */}
                   <div className="flex items-center gap-2">
@@ -589,8 +635,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   </span>
                 </div>
               </div>
-            </div>
+            </>
+          ) : (
+            <EmulationScaleSettings
+              state={state}
+              onUpdateEmulationConfig={onUpdateEmulationConfig || (() => {})}
+              onShowToast={onShowToast}
+            />
           )}
+        </div>
+      )}
 
           {/* TAB 2: CÀI ĐẶT CHUNG (GENERAL CONFIG) */}
           {activeTab === 'general' && (
