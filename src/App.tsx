@@ -65,6 +65,38 @@ interface ToastItem {
   type: 'success' | 'error';
 }
 
+/**
+ * Merge emulation configs safely so newer local changes (higher version or newer timestamp)
+ * are never overwritten by stale remote payloads from Supabase.
+ */
+const mergeEmulationConfig = (
+  localCfg?: EmulationConfig,
+  remoteCfg?: EmulationConfig
+): EmulationConfig | undefined => {
+  if (!localCfg) return remoteCfg;
+  if (!remoteCfg) return localCfg;
+  const localVer = localCfg.version || 0;
+  const remoteVer = remoteCfg.version || 0;
+  if (localVer > remoteVer) return localCfg;
+  if (remoteVer > localVer) return remoteCfg;
+  const localTime = new Date(localCfg.updatedAt || 0).getTime();
+  const remoteTime = new Date(remoteCfg.updatedAt || 0).getTime();
+  return localTime >= remoteTime ? localCfg : remoteCfg;
+};
+
+const mergeClassEmulationConfigs = (
+  localMap?: Record<string, EmulationConfig>,
+  remoteMap?: Record<string, EmulationConfig>
+): Record<string, EmulationConfig> => {
+  const merged: Record<string, EmulationConfig> = { ...(remoteMap || {}) };
+  if (localMap) {
+    for (const [key, localCfg] of Object.entries(localMap)) {
+      merged[key] = mergeEmulationConfig(localCfg, merged[key])!;
+    }
+  }
+  return merged;
+};
+
 export default function App() {
   const [state, setState] = useState<AppState>(() => {
     try {
@@ -188,15 +220,27 @@ export default function App() {
         if (remoteState && remoteState.students) {
           const currentTeacher = remoteState.config?.teacherName || state.config.teacherName || 'Cô Lê Thị Kim Thanh';
           const normalizedNotices = normalizeTeacherNotices(remoteState.boardNotices || [], currentTeacher);
-          setState((prev) => ({
-            ...prev,
-            ...remoteState,
-            config: {
-              ...prev.config,
-              ...remoteState.config,
-            },
-            boardNotices: normalizedNotices,
-          }));
+          setState((prev) => {
+            const mergedClassConfigs = mergeClassEmulationConfigs(
+              prev.classEmulationConfigs,
+              remoteState.classEmulationConfigs
+            );
+            const mergedEmulationConfig = mergeEmulationConfig(
+              prev.emulationConfig,
+              remoteState.emulationConfig
+            );
+            return {
+              ...prev,
+              ...remoteState,
+              config: {
+                ...prev.config,
+                ...remoteState.config,
+              },
+              boardNotices: normalizedNotices,
+              classEmulationConfigs: mergedClassConfigs,
+              emulationConfig: mergedEmulationConfig || prev.emulationConfig,
+            };
+          });
           setSyncStatus((prev) => ({
             ...prev,
             lastSyncedAt: new Date().toLocaleTimeString('vi-VN'),
@@ -206,10 +250,22 @@ export default function App() {
         // Subscribe to real-time changes from other tabs or devices
         unsubscribe = supabaseService.subscribe((updatedRemote) => {
           if (updatedRemote && updatedRemote.students) {
-            setState((prev) => ({
-              ...prev,
-              ...updatedRemote,
-            }));
+            setState((prev) => {
+              const mergedClassConfigs = mergeClassEmulationConfigs(
+                prev.classEmulationConfigs,
+                updatedRemote.classEmulationConfigs
+              );
+              const mergedEmulationConfig = mergeEmulationConfig(
+                prev.emulationConfig,
+                updatedRemote.emulationConfig
+              );
+              return {
+                ...prev,
+                ...updatedRemote,
+                classEmulationConfigs: mergedClassConfigs,
+                emulationConfig: mergedEmulationConfig || prev.emulationConfig,
+              };
+            });
             setSyncStatus((prev) => ({
               ...prev,
               lastSyncedAt: new Date().toLocaleTimeString('vi-VN'),
@@ -831,22 +887,59 @@ export default function App() {
     });
   };
 
-  const handleUpdateEmulationConfig = (newConfig: EmulationConfig) => {
-    setState((prev) => {
-      const className = prev.config.className || '8A3';
-      const schoolYear = prev.config.schoolYear || '2024 - 2025';
-      const classKey = `${className}_${schoolYear}`;
-      const nextState: AppState = {
-        ...prev,
-        emulationConfig: newConfig,
-        classEmulationConfigs: {
-          ...(prev.classEmulationConfigs || {}),
-          [classKey]: newConfig,
-        },
-      };
-      persistStateImmediately(nextState);
-      return nextState;
-    });
+  const handleUpdateEmulationConfig = async (
+    newConfig: EmulationConfig
+  ): Promise<{ success: boolean; error?: string }> => {
+    try {
+      let nextStateToSave: AppState | null = null;
+
+      setState((prev) => {
+        const className = prev.config.className || '6A8';
+        const schoolYear = prev.config.schoolYear || '2024 - 2025';
+        const classKey = `${className}_${schoolYear}`;
+        const nextState: AppState = {
+          ...prev,
+          emulationConfig: newConfig,
+          classEmulationConfigs: {
+            ...(prev.classEmulationConfigs || {}),
+            [classKey]: newConfig,
+          },
+        };
+        nextStateToSave = nextState;
+
+        // 1. Lưu ngay lập tức vào LocalStorage để đảm bảo tải lại trang vẫn giữ cấu hình
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(nextState));
+        } catch (e) {
+          console.error('LocalStorage save error', e);
+        }
+        return nextState;
+      });
+
+      // 2. Đồng bộ lên Supabase Cloud nếu sẵn sàng
+      if (syncStatus.isTableReady && nextStateToSave) {
+        setSyncStatus((prev) => ({ ...prev, isSyncing: true }));
+        const res = await supabaseService.saveState(nextStateToSave);
+        setSyncStatus((prev) => ({
+          ...prev,
+          isSyncing: false,
+          lastSyncedAt: res.success
+            ? new Date().toLocaleTimeString('vi-VN')
+            : prev.lastSyncedAt,
+          errorMessage: res.error || null,
+        }));
+        if (!res.success) {
+          return {
+            success: false,
+            error: res.error || 'Lỗi khi đồng bộ lên cơ sở dữ liệu Supabase',
+          };
+        }
+      }
+
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err?.message || 'Lỗi khi lưu cấu hình' };
+    }
   };
 
   const handleResetData = () => {

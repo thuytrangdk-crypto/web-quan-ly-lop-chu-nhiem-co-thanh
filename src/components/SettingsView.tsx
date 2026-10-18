@@ -31,7 +31,7 @@ interface SettingsViewProps {
   state: AppState;
   onUpdateConfig: (newConfig: Partial<AppState['config']>) => void;
   onUpdateDisciplineRules: (rules: DisciplineRule[]) => void;
-  onUpdateEmulationConfig?: (newConfig: EmulationConfig) => void;
+  onUpdateEmulationConfig?: (newConfig: EmulationConfig) => Promise<{ success: boolean; error?: string }> | void;
   onResetData: () => void;
   onClearAllData: () => void;
   onImportBackup: (backupState: AppState) => void;

@@ -87,10 +87,16 @@ export function calculateEmulationData(
   });
 
   // 2. Tính điểm cho tất cả học sinh của lớp theo thang điểm đã cấu hình
-  const basePoints = emulationConfig?.initialPoints ?? 100;
-  const totTier = emulationConfig?.conductTiers?.find((t) => t.id === 'tot')?.minScore ?? 105;
-  const khaTier = emulationConfig?.conductTiers?.find((t) => t.id === 'kha')?.minScore ?? 90;
-  const datTier = emulationConfig?.conductTiers?.find((t) => t.id === 'dat')?.minScore ?? 70;
+  const basePoints =
+    emulationConfig?.initialPoints !== undefined && Number.isFinite(emulationConfig.initialPoints)
+      ? emulationConfig.initialPoints
+      : 100;
+  const totTierVal = emulationConfig?.conductTiers?.find((t) => t.id === 'tot')?.minScore;
+  const totTier = totTierVal !== undefined && Number.isFinite(totTierVal) ? totTierVal : 105;
+  const khaTierVal = emulationConfig?.conductTiers?.find((t) => t.id === 'kha')?.minScore;
+  const khaTier = khaTierVal !== undefined && Number.isFinite(khaTierVal) ? khaTierVal : 90;
+  const datTierVal = emulationConfig?.conductTiers?.find((t) => t.id === 'dat')?.minScore;
+  const datTier = datTierVal !== undefined && Number.isFinite(datTierVal) ? datTierVal : 70;
 
   const studentSummariesRaw = students.map((student) => {
     const studentRecords = periodRecords.filter((r) => r.studentId === student.id);

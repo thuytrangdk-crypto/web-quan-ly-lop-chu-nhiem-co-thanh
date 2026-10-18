@@ -196,7 +196,10 @@ export function evaluateStudentEmulation(
     }
   }
 
-  const initialPoints = config.initialPoints ?? 100;
+  const initialPoints =
+    config.initialPoints !== undefined && Number.isFinite(config.initialPoints)
+      ? config.initialPoints
+      : 100;
   // Điểm thi đua = Điểm ban đầu + Tổng điểm thưởng − Tổng điểm vi phạm
   const rawTotalPoints = initialPoints + plusPoints - minusPoints;
   // Không tự chặn điểm tổng ở 0 hoặc điểm ban đầu
@@ -207,9 +210,18 @@ export function evaluateStudentEmulation(
   const khaTier = config.conductTiers?.find((t) => t.id === 'kha');
   const datTier = config.conductTiers?.find((t) => t.id === 'dat');
 
-  const tScore = totTier ? totTier.minScore : 105;
-  const kScore = khaTier ? khaTier.minScore : 90;
-  const dScore = datTier ? datTier.minScore : 70;
+  const tScore =
+    totTier?.minScore !== undefined && Number.isFinite(totTier.minScore)
+      ? totTier.minScore
+      : 105;
+  const kScore =
+    khaTier?.minScore !== undefined && Number.isFinite(khaTier.minScore)
+      ? khaTier.minScore
+      : 90;
+  const dScore =
+    datTier?.minScore !== undefined && Number.isFinite(datTier.minScore)
+      ? datTier.minScore
+      : 70;
 
   let suggestedRating: ConductGrade = 'Chưa đạt';
 
