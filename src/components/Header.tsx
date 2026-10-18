@@ -82,11 +82,11 @@ export const Header: React.FC<HeaderProps> = ({
           <Menu className="w-5 h-5" />
         </button>
 
-        {/* Góc trái màn hình: Hình nón tú tài trên nền hồng */}
-        <div className="flex items-center gap-3 min-w-0">
+        {/* Góc trái màn hình: Logo và tiêu đề TRỢ LÝ CHỦ NHIỆM + bộ chọn lớp */}
+        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
           <div
             onClick={onGoHome}
-            title={`Lớp ${className} - ${schoolName || 'Trường THCS Chu Văn An'}`}
+            title={`TRỢ LÝ CHỦ NHIỆM - Lớp ${className}`}
             className="w-10 h-10 lg:w-11 lg:h-11 rounded-2xl bg-linear-to-tr from-pink-500 via-rose-500 to-pink-400 text-white flex items-center justify-center shadow-md shadow-pink-500/25 ring-2 ring-pink-300/50 shrink-0 cursor-pointer active:scale-95 transition-transform"
           >
             <GraduationCap className="w-6 h-6 text-white stroke-[2.2]" />
@@ -94,19 +94,37 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* School Name & Class info display */}
           <div className="min-w-0">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <h1 className="text-sm lg:text-base font-black text-gray-900 tracking-tight flex items-center gap-1.5 truncate">
-                <span className="truncate">{title}</span>
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+              <h1 className="text-sm sm:text-base lg:text-lg font-black text-gray-900 tracking-tight flex items-center gap-1.5 truncate">
+                <span>TRỢ LÝ CHỦ NHIỆM</span>
               </h1>
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-pink-100 text-pink-700 border border-pink-300/60 shadow-2xs">
-                Lớp {className}
-              </span>
+
+              {/* Bộ chọn lớp trên cả máy tính và điện thoại */}
+              {isTeacher ? (
+                <button
+                  type="button"
+                  onClick={onOpenClassSwitch}
+                  title={`Bấm để chuyển đổi lớp (Đang chọn: Lớp ${className})`}
+                  className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold bg-pink-100 hover:bg-pink-200 text-pink-700 border border-pink-300/80 shadow-2xs transition-all cursor-pointer active:scale-95 shrink-0"
+                >
+                  <Layers className="w-3.5 h-3.5 text-pink-600 shrink-0" />
+                  <span>Lớp {className}</span>
+                  <ChevronDown className="w-3 h-3 text-pink-500 shrink-0" />
+                </button>
+              ) : (
+                <span className="inline-flex items-center px-2.5 py-1 rounded-xl text-xs font-bold bg-pink-100 text-pink-700 border border-pink-300/80 shadow-2xs shrink-0">
+                  Lớp {className}
+                </span>
+              )}
             </div>
 
-            {/* Subtitle with School Name & School Year (Linh động chỉnh được) */}
-            <div className="flex items-center gap-2 text-[11px] lg:text-xs text-gray-500 mt-0.5 truncate">
-              <span className="font-semibold text-gray-700 truncate max-w-[150px] sm:max-w-[220px] md:max-w-[300px]" title={schoolName || 'Trường THCS Chu Văn An'}>
-                {schoolName || 'Trường THCS Chu Văn An'}
+            {/* Subtitle with School Name & School Year */}
+            <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] lg:text-xs text-gray-500 mt-0.5 truncate">
+              <span
+                className="font-semibold text-gray-700 truncate max-w-[120px] sm:max-w-[200px] md:max-w-[280px]"
+                title={schoolName || 'Trường THCS'}
+              >
+                {schoolName || 'Trường THCS'}
               </span>
               <span className="text-gray-300 hidden sm:inline">•</span>
               <span className="hidden sm:inline-flex items-center gap-1 text-pink-700 font-medium">
@@ -114,16 +132,16 @@ export const Header: React.FC<HeaderProps> = ({
                 <span>Năm học {schoolYear || '2024 - 2025'}</span>
               </span>
 
-              {/* Nút sửa nhanh thông tin trường và năm học bên ngoài (Chỉ giáo viên chủ nhiệm mới thực hiện được) */}
+              {/* Nút sửa nhanh thông tin trường và năm học */}
               {isTeacher && onOpenQuickEditSchool && (
                 <button
                   type="button"
                   onClick={onOpenQuickEditSchool}
                   title="Chỉnh sửa linh động tên trường, lớp và năm học"
-                  className="px-2 py-0.5 rounded-lg bg-pink-50 hover:bg-pink-100 text-pink-700 hover:text-pink-800 text-[10px] font-bold border border-pink-200/80 transition-all flex items-center gap-1 cursor-pointer ml-1 active:scale-95"
+                  className="hidden md:inline-flex px-2 py-0.5 rounded-lg bg-pink-50 hover:bg-pink-100 text-pink-700 text-[10px] font-bold border border-pink-200/80 transition-all items-center gap-1 cursor-pointer ml-1 active:scale-95"
                 >
                   <Edit2 className="w-2.5 h-2.5 text-pink-600" />
-                  <span className="hidden md:inline">Sửa trường & năm học</span>
+                  <span>Sửa trường</span>
                 </button>
               )}
             </div>
@@ -167,17 +185,6 @@ export const Header: React.FC<HeaderProps> = ({
           </span>
         </button>
 
-        {/* Quick class switch for teacher */}
-        {isTeacher && (
-          <button
-            onClick={onOpenClassSwitch}
-            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
-          >
-            <Layers className="w-3.5 h-3.5 text-gray-500" />
-            <span>Đổi Lớp ({className})</span>
-          </button>
-        )}
-
         {/* User profile / actions dropdown */}
         <div className="relative">
           <button
@@ -189,7 +196,11 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
             <div className="text-left hidden md:block">
               <div className="text-xs font-bold text-gray-800 leading-tight">
-                {isTeacher ? `Cô ${teacherName}` : studentName || 'Học sinh'}
+                {isTeacher
+                  ? teacherName.startsWith('Cô ') || teacherName.startsWith('Thầy ')
+                    ? teacherName
+                    : `Cô ${teacherName}`
+                  : studentName || 'Học sinh'}
               </div>
               <div className="text-[10px] text-gray-400">
                 {isTeacher ? 'Giáo viên chủ nhiệm' : 'Học sinh lớp'}
@@ -220,7 +231,7 @@ export const Header: React.FC<HeaderProps> = ({
                       setIsDropdownOpen(false);
                       onOpenMyProfile();
                     }}
-                    className="w-full px-3.5 py-2 text-left text-xs font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-2.5"
+                    className="w-full px-3.5 py-2 text-left text-xs font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-2.5 cursor-pointer"
                   >
                     <User className="w-4 h-4 text-gray-400" />
                     <span>Hồ sơ của tôi</span>
@@ -233,7 +244,7 @@ export const Header: React.FC<HeaderProps> = ({
                       setIsDropdownOpen(false);
                       onOpenClassSwitch();
                     }}
-                    className="w-full px-3.5 py-2 text-left text-xs font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-2.5 sm:hidden"
+                    className="w-full px-3.5 py-2 text-left text-xs font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-2.5 cursor-pointer"
                   >
                     <Layers className="w-4 h-4 text-gray-400" />
                     <span>Chuyển đổi lớp học</span>

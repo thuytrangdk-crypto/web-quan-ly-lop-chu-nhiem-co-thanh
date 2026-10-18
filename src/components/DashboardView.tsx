@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { AppState, AttendanceStatus, Student } from '../types';
 import {
   Users,
@@ -19,8 +19,9 @@ import {
   FileSpreadsheet,
   Megaphone,
   Edit2,
+  Trophy,
 } from 'lucide-react';
-import { calculateAverageGrade, calculateTotalPoints, getTodayStr } from '../utils/helpers';
+import { calculateAverageGrade, getTodayStr } from '../utils/helpers';
 
 interface DashboardViewProps {
   state: AppState;
@@ -68,16 +69,42 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         s.position.includes('Tổ trưởng'))
   );
 
-  // Top students by discipline points
-  const studentsWithPoints = students.map((s) => ({
-    student: s,
-    points: calculateTotalPoints(state.discipline, s.id),
-    avgGrade: calculateAverageGrade(s.grades),
-  }));
+  // TOP 5 HỌC TẬP: Chỉ dựa trên điểm học tập thực tế (ĐTB)
+  const topAcademicStudents = useMemo(() => {
+    // 1. Chỉ lấy học sinh có điểm học tập hợp lệ (không coi chưa nhập là 0)
+    const validStudents = students
+      .map((s) => {
+        const avg = calculateAverageGrade(s.grades);
+        return {
+          student: s,
+          avgGrade: avg,
+        };
+      })
+      .filter((item): item is { student: Student; avgGrade: number } => item.avgGrade !== null);
 
-  const topDisciplineStudents = [...studentsWithPoints]
-    .sort((a, b) => b.points - a.points)
-    .slice(0, 5);
+    // 2. Sắp xếp giảm dần theo điểm ĐTB; nếu bằng điểm thì dùng mã hồ sơ (ID) để sắp thứ tự ổn định
+    validStudents.sort((a, b) => {
+      if (b.avgGrade !== a.avgGrade) {
+        return b.avgGrade - a.avgGrade;
+      }
+      return a.student.id.localeCompare(b.student.id);
+    });
+
+    // 3. Lấy tối đa 5 học sinh
+    const top5 = validStudents.slice(0, 5);
+
+    // 4. Gán thứ hạng: nếu bằng điểm, cùng hạng!
+    let currentRank = 1;
+    return top5.map((item, index) => {
+      if (index > 0 && item.avgGrade < top5[index - 1].avgGrade) {
+        currentRank = index + 1;
+      }
+      return {
+        ...item,
+        rank: currentRank,
+      };
+    });
+  }, [students]);
 
   // Latest notices
   const recentNotices = [...state.boardNotices].slice(0, 3);
@@ -114,7 +141,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </h2>
             <p className="text-sm text-gray-600 max-w-xl font-medium">
               {isTeacher
-                ? `Giáo viên chủ nhiệm: Cô ${state.config.teacherName}. Chúc cô và các con một ngày học tập sôi nổi và đạt nhiều kết quả tốt.`
+                ? `Giáo viên chủ nhiệm: ${state.config.teacherName.startsWith('Cô ') || state.config.teacherName.startsWith('Thầy ') ? state.config.teacherName : `Cô ${state.config.teacherName}`}. Chúc cô và các con một ngày học tập sôi nổi và đạt nhiều kết quả tốt.`
                 : `Học sinh: ${students.find((s) => s.id === currentStudentId)?.name || 'Học sinh'}. Chúc em học tập thật tốt hôm nay!`}
             </p>
           </div>
@@ -314,57 +341,63 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
         </div>
 
-        {/* Vinh danh Thi đua / Điểm cao */}
+        {/* TOP 5 HỌC TẬP - Chỉ dựa trên điểm học tập thực tế (ĐTB) */}
         <div className="bg-white rounded-3xl p-5 lg:p-6 border border-gray-200/80 shadow-xs flex flex-col">
           <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
             <div className="flex items-center gap-2.5">
               <div className="p-2 bg-amber-50 text-amber-600 rounded-xl">
-                <Star className="w-4 h-4" />
+                <Trophy className="w-4 h-4" />
               </div>
-              <h3 className="font-bold text-sm text-gray-900">Bảng Vàng Thi Đua & Nề Nếp</h3>
+              <h3 className="font-bold text-sm text-gray-900 uppercase tracking-tight">TOP 5 HỌC TẬP</h3>
             </div>
-            <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
-              Top 5 Tiêu biểu
+            <span className="text-xs font-bold text-pink-600 bg-pink-50 px-2.5 py-0.5 rounded-full border border-pink-100">
+              Lớp {state.config.className}
             </span>
           </div>
 
           <div className="space-y-2.5 flex-1 overflow-y-auto max-h-80 custom-scrollbar pr-1">
-            {topDisciplineStudents.map((item, index) => (
-              <div
-                key={item.student.id}
-                onClick={() => onSelectStudent(item.student.id)}
-                className="flex items-center justify-between p-2.5 rounded-2xl hover:bg-amber-50/50 border border-transparent hover:border-amber-200 transition-all cursor-pointer group"
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-extrabold ${
-                      index === 0
-                        ? 'bg-amber-400 text-amber-950 shadow-xs'
-                        : index === 1
-                        ? 'bg-slate-300 text-slate-800'
-                        : index === 2
-                        ? 'bg-amber-700/60 text-white'
-                        : 'bg-gray-100 text-gray-600'
-                    }`}
-                  >
-                    #{index + 1}
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold text-gray-800 group-hover:text-amber-800">
-                      {item.student.name}
-                    </div>
-                    <div className="text-[11px] text-gray-400">
-                      ĐTB: <strong className="text-gray-700">{item.avgGrade !== null ? item.avgGrade : 'N/A'}</strong>
-                    </div>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span className="inline-block px-2.5 py-1 rounded-xl text-xs font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    +{item.points} đ
-                  </span>
-                </div>
+            {topAcademicStudents.length === 0 ? (
+              <div className="py-10 text-center text-xs text-gray-400 font-medium">
+                Chưa có dữ liệu học tập để xếp hạng
               </div>
-            ))}
+            ) : (
+              topAcademicStudents.map((item) => (
+                <div
+                  key={item.student.id}
+                  onClick={() => onSelectStudent(item.student.id)}
+                  className="flex items-center justify-between p-2.5 rounded-2xl hover:bg-pink-50/40 border border-transparent hover:border-pink-200 transition-all cursor-pointer group"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div
+                      className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black shrink-0 ${
+                        item.rank === 1
+                          ? 'bg-amber-400 text-amber-950 shadow-xs ring-1 ring-amber-300'
+                          : item.rank === 2
+                          ? 'bg-slate-200 text-slate-800'
+                          : item.rank === 3
+                          ? 'bg-amber-700/60 text-white'
+                          : 'bg-gray-100 text-gray-600'
+                      }`}
+                    >
+                      #{item.rank}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-xs font-bold text-gray-800 group-hover:text-pink-700 truncate">
+                        {item.student.name}
+                      </div>
+                      <div className="text-[11px] text-gray-400 truncate">
+                        Mã HS: <span className="font-mono text-gray-600">{item.student.id}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0 ml-2">
+                    <span className="inline-block px-2.5 py-1 rounded-xl text-xs font-black bg-rose-50 text-rose-700 border border-rose-200 shadow-2xs">
+                      ĐTB: {item.avgGrade.toFixed(1).replace('.', ',')}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
 

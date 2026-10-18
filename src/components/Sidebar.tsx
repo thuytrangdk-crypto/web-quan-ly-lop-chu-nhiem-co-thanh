@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import {
   LayoutDashboard,
   Users,
@@ -6,13 +6,9 @@ import {
   Megaphone,
   Settings,
   LogOut,
-  Camera,
   Layers,
   KeyRound,
-  User,
   X,
-  GraduationCap,
-  Sparkles,
   Cloud,
 } from 'lucide-react';
 import { SyncStatus } from '../services/supabaseService';
@@ -54,20 +50,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenMyProfile,
   syncStatus,
 }) => {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (typeof reader.result === 'string') {
-          onUpdateClassAvatar(reader.result);
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-  };
 
   const navItems = [
     { id: 'dashboard', label: 'Tổng quan Lớp', icon: LayoutDashboard },
@@ -81,33 +63,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const content = (
     <div className="flex flex-col h-full bg-slate-900 text-slate-100 border-r border-slate-800">
-      {/* Brand header */}
-      <div className="p-5 border-b border-slate-800/80 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          {/* Góc trái: Hình nón tú tài trên nền hồng */}
-          <div className="w-12 h-12 rounded-2xl bg-linear-to-tr from-pink-500 via-rose-500 to-pink-400 flex items-center justify-center text-white shadow-lg shadow-pink-500/25 ring-2 ring-pink-300/40 shrink-0">
-            <GraduationCap className="w-7 h-7 text-white stroke-[2.2]" />
-          </div>
-
-          <div>
-            <div className="flex items-center gap-1.5">
-              <span className="font-black text-base tracking-tight text-white">
-                Lớp {className}
-              </span>
-              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-pink-500/20 text-pink-300 border border-pink-500/30">
-                Sổ Chủ Nhiệm
-              </span>
-            </div>
-            <p className="text-xs text-pink-200/70 font-medium truncate max-w-[145px]" title={schoolName || 'Trường THCS Chu Văn An'}>
-              {schoolName || 'Trường THCS Chu Văn An'}
-            </p>
-          </div>
-        </div>
-
-        {/* Mobile close button */}
+      {/* Mobile drawer header (Chỉ hiển thị trên điện thoại khi mở menu kéo ra) */}
+      <div className="lg:hidden p-3.5 border-b border-slate-800/80 flex items-center justify-between">
+        <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+          Menu Điều Hướng
+        </span>
         <button
           onClick={onCloseMobile}
-          className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer"
+          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer"
+          aria-label="Đóng menu"
         >
           <X className="w-5 h-5" />
         </button>

@@ -29,6 +29,7 @@ import {
   generateId,
   parseCsvStudents,
 } from '../utils/helpers';
+import { EmulationExportModal } from './EmulationExportModal';
 
 interface StudentsViewProps {
   state: AppState;
@@ -65,6 +66,7 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
   // Modals
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isEmulationExportOpen, setIsEmulationExportOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
 
   // Add / Edit form state
@@ -253,6 +255,14 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
             >
               <Upload className="w-4 h-4" />
               <span>Nhập Excel / CSV</span>
+            </button>
+            <button
+              onClick={() => setIsEmulationExportOpen(true)}
+              className="px-3.5 py-2 bg-linear-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white font-bold text-xs rounded-xl shadow-xs shadow-pink-500/20 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+              title="Xuất file Excel gồm 2 sheet Tổng hợp và Chi tiết thi đua của lớp"
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+              <span>Xuất Excel thi đua</span>
             </button>
             <button
               onClick={handleExportCsv}
@@ -916,6 +926,16 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modal Xuất Excel Thi Đua */}
+      {isEmulationExportOpen && (
+        <EmulationExportModal
+          isOpen={isEmulationExportOpen}
+          onClose={() => setIsEmulationExportOpen(false)}
+          state={state}
+          onShowToast={onShowToast}
+        />
       )}
     </div>
   );
