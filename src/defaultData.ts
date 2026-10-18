@@ -31,7 +31,7 @@ export const DEFAULT_INITIAL_STATE: AppState = {
     schoolYear: '2024 - 2025',
     teacherName: 'Cô Lê Thị Kim Thanh',
     teacherPassword: '123',
-    availableClasses: ['8A3', '9A5', '7A1', '6A2'],
+    availableClasses: ['6A8', '8A3', '9A5', '7A1', '6A2'],
     classAvatar: '',
   },
   students: [

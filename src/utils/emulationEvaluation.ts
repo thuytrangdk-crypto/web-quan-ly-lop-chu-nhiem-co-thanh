@@ -69,35 +69,75 @@ export const DEFAULT_EMULATION_CONFIG: EmulationConfig = {
 
 /**
  * Kiểm tra tính hợp lệ của thang điểm & ngưỡng xếp loại:
- * - Không chồng lấn, không bỏ sót
- * - Xử lý chính xác điểm bằng ngưỡng: Tốt >= N_tot > N_kha > N_dat
+ * - Chấp nhận số hữu hạn (kể cả 0, số âm, số thập phân)
+ * - Điều kiện giữa các ngưỡng chỉ là: Tốt > Khá > Đạt
  */
-export function validateConductTiers(tiers: ConductTierConfig[]): {
+export function validateConductTiers(
+  tiers: ConductTierConfig[],
+  initialPoints?: number
+): {
   isValid: boolean;
   errorMessage?: string;
+  fieldErrors?: {
+    initialPoints?: string;
+    tot?: string;
+    kha?: string;
+    dat?: string;
+  };
 } {
   const totTier = tiers.find((t) => t.id === 'tot');
   const khaTier = tiers.find((t) => t.id === 'kha');
   const datTier = tiers.find((t) => t.id === 'dat');
 
-  if (!totTier || !khaTier || !datTier) {
+  const errors: {
+    initialPoints?: string;
+    tot?: string;
+    kha?: string;
+    dat?: string;
+  } = {};
+
+  if (initialPoints !== undefined && !Number.isFinite(initialPoints)) {
+    errors.initialPoints = 'Vui lòng nhập điểm ban đầu hợp lệ';
+  }
+
+  if (!totTier || !Number.isFinite(totTier.minScore)) {
+    errors.tot = 'Vui lòng nhập ngưỡng điểm Tốt hợp lệ';
+  }
+  if (!khaTier || !Number.isFinite(khaTier.minScore)) {
+    errors.kha = 'Vui lòng nhập ngưỡng điểm Khá hợp lệ';
+  }
+  if (!datTier || !Number.isFinite(datTier.minScore)) {
+    errors.dat = 'Vui lòng nhập ngưỡng điểm Đạt hợp lệ';
+  }
+
+  if (Object.keys(errors).length > 0) {
     return {
       isValid: false,
-      errorMessage: 'Thiếu cấu hình cho một trong các mức Tốt, Khá hoặc Đạt.',
+      errorMessage: 'Vui lòng nhập đầy đủ các ô điểm hợp lệ.',
+      fieldErrors: errors,
     };
   }
 
-  if (totTier.minScore <= khaTier.minScore) {
+  const tScore = totTier!.minScore;
+  const kScore = khaTier!.minScore;
+  const dScore = datTier!.minScore;
+
+  // Điều kiện giữa các ngưỡng chỉ là: Tốt > Khá > Đạt
+  if (tScore <= kScore) {
+    errors.tot = `Ngưỡng Tốt (${tScore}) phải lớn hơn ngưỡng Khá (${kScore})`;
     return {
       isValid: false,
-      errorMessage: `Ngưỡng điểm mức "Tốt" (${totTier.minScore}) phải lớn hơn mức "Khá" (${khaTier.minScore}).`,
+      errorMessage: `Ngưỡng Tốt (${tScore}) phải lớn hơn ngưỡng Khá (${kScore})`,
+      fieldErrors: errors,
     };
   }
 
-  if (khaTier.minScore <= datTier.minScore) {
+  if (kScore <= dScore) {
+    errors.kha = `Ngưỡng Khá (${kScore}) phải lớn hơn ngưỡng Đạt (${dScore})`;
     return {
       isValid: false,
-      errorMessage: `Ngưỡng điểm mức "Khá" (${khaTier.minScore}) phải lớn hơn mức "Đạt" (${datTier.minScore}).`,
+      errorMessage: `Ngưỡng Khá (${kScore}) phải lớn hơn ngưỡng Đạt (${dScore})`,
+      fieldErrors: errors,
     };
   }
 
@@ -108,8 +148,8 @@ export interface StudentEvaluationResult {
   initialPoints: number;
   plusPoints: number;
   minusPoints: number; // positive number
-  rawTotalPoints: number; // initial + plus - minus
-  finalTotalPoints: number; // clamped if min/max enabled
+  rawTotalPoints: number; // Điểm ban đầu + Tổng điểm thưởng − Tổng điểm vi phạm
+  finalTotalPoints: number; // Không tự chặn ở 0 hay điểm ban đầu
   minScoreApplied: boolean;
   maxScoreApplied: boolean;
   suggestedRating: ConductGrade;
@@ -121,7 +161,17 @@ export interface StudentEvaluationResult {
 }
 
 /**
- * Tính điểm thi đua và xếp loại gợi ý rèn luyện cho học sinh theo cấu hình
+ * Tính điểm thi đua và xếp loại gợi ý rèn luyện cho học sinh theo cấu hình:
+ * Điểm thi đua = Điểm ban đầu + Tổng điểm thưởng − Tổng điểm vi phạm
+ *
+ * Gọi các ngưỡng giáo viên nhập là T, K, D:
+ * - Điểm >= T: Tốt
+ * - K <= Điểm < T: Khá
+ * - D <= Điểm < K: Đạt
+ * - Điểm < D: Chưa đạt
+ *
+ * Không tự chặn điểm tổng ở 0 hoặc điểm ban đầu.
+ * Không dùng điều kiện ngầm về số lần vi phạm để thay đổi kết quả của thang điểm này.
  */
 export function evaluateStudentEmulation(
   studentId: string,
@@ -147,60 +197,35 @@ export function evaluateStudentEmulation(
   }
 
   const initialPoints = config.initialPoints ?? 100;
+  // Điểm thi đua = Điểm ban đầu + Tổng điểm thưởng − Tổng điểm vi phạm
   const rawTotalPoints = initialPoints + plusPoints - minusPoints;
+  // Không tự chặn điểm tổng ở 0 hoặc điểm ban đầu
+  const finalTotalPoints = rawTotalPoints;
 
-  // Áp dụng giới hạn Min/Max nếu được bật
-  let finalTotalPoints = rawTotalPoints;
-  let minScoreApplied = false;
-  let maxScoreApplied = false;
+  // Lấy 3 ngưỡng T, K, D do giáo viên tự thiết lập
+  const totTier = config.conductTiers?.find((t) => t.id === 'tot');
+  const khaTier = config.conductTiers?.find((t) => t.id === 'kha');
+  const datTier = config.conductTiers?.find((t) => t.id === 'dat');
 
-  if (config.enableMinScore && typeof config.minScore === 'number' && finalTotalPoints < config.minScore) {
-    finalTotalPoints = config.minScore;
-    minScoreApplied = true;
-  }
+  const tScore = totTier ? totTier.minScore : 105;
+  const kScore = khaTier ? khaTier.minScore : 90;
+  const dScore = datTier ? datTier.minScore : 70;
 
-  if (config.enableMaxScore && typeof config.maxScore === 'number' && finalTotalPoints > config.maxScore) {
-    finalTotalPoints = config.maxScore;
-    maxScoreApplied = true;
-  }
+  let suggestedRating: ConductGrade = 'Chưa đạt';
 
-  // Xác định mức xếp loại rèn luyện theo ngưỡng điểm
-  const totTier = config.conductTiers.find((t) => t.id === 'tot') || DEFAULT_EMULATION_CONFIG.conductTiers[0];
-  const khaTier = config.conductTiers.find((t) => t.id === 'kha') || DEFAULT_EMULATION_CONFIG.conductTiers[1];
-  const datTier = config.conductTiers.find((t) => t.id === 'dat') || DEFAULT_EMULATION_CONFIG.conductTiers[2];
-
-  let originalTierRating: ConductGrade = 'Chưa đạt';
-  let activeTier = config.conductTiers.find((t) => t.id === 'chuadat');
-
-  if (finalTotalPoints >= totTier.minScore) {
-    originalTierRating = 'Tốt';
-    activeTier = totTier;
-  } else if (finalTotalPoints >= khaTier.minScore) {
-    originalTierRating = 'Khá';
-    activeTier = khaTier;
-  } else if (finalTotalPoints >= datTier.minScore) {
-    originalTierRating = 'Đạt';
-    activeTier = datTier;
+  // Cách tính chuẩn:
+  // - Điểm >= T: Tốt
+  // - K <= Điểm < T: Khá
+  // - D <= Điểm < K: Đạt
+  // - Điểm < D: Chưa đạt
+  if (finalTotalPoints >= tScore) {
+    suggestedRating = 'Tốt';
+  } else if (finalTotalPoints >= kScore) {
+    suggestedRating = 'Khá';
+  } else if (finalTotalPoints >= dScore) {
+    suggestedRating = 'Đạt';
   } else {
-    originalTierRating = 'Chưa đạt';
-  }
-
-  // Kiểm tra điều kiện bổ sung tự động (nếu giáo viên chủ động bật cho mức đó)
-  let suggestedRating: ConductGrade = originalTierRating;
-  let isDowngraded = false;
-  let downgradeReason: string | null = null;
-
-  if (
-    activeTier &&
-    activeTier.additionalRulesEnabled &&
-    typeof activeTier.maxViolations === 'number' &&
-    activeTier.downgradeTo
-  ) {
-    if (negativeCount > activeTier.maxViolations) {
-      suggestedRating = activeTier.downgradeTo;
-      isDowngraded = true;
-      downgradeReason = `Hạ gợi ý từ "${originalTierRating}" xuống "${suggestedRating}" do có ${negativeCount} lần vi phạm nề nếp (vượt mức tối đa ${activeTier.maxViolations} lần cho phép)`;
-    }
+    suggestedRating = 'Chưa đạt';
   }
 
   return {
@@ -209,12 +234,12 @@ export function evaluateStudentEmulation(
     minusPoints,
     rawTotalPoints,
     finalTotalPoints,
-    minScoreApplied,
-    maxScoreApplied,
+    minScoreApplied: false,
+    maxScoreApplied: false,
     suggestedRating,
-    originalTierRating,
-    isDowngraded,
-    downgradeReason,
+    originalTierRating: suggestedRating,
+    isDowngraded: false,
+    downgradeReason: null,
     positiveCount,
     negativeCount,
   };

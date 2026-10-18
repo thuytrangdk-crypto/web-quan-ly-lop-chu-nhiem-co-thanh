@@ -1,6 +1,7 @@
 import ExcelJS from 'exceljs';
-import { AppState, DisciplineRecord, Student } from '../types';
+import { AppState, DisciplineRecord, EmulationConfig, Student } from '../types';
 import { formatViDate } from './helpers';
+import { getEmulationConfigForClass } from './emulationEvaluation';
 
 export interface EmulationPeriodInfo {
   type: 'week' | 'month' | 'semester' | 'year' | 'custom';
@@ -11,12 +12,12 @@ export interface EmulationPeriodInfo {
 
 export interface StudentEmulationSummary {
   student: Student;
-  basePoints: number; // 100
+  basePoints: number; // Điểm ban đầu
   plusPoints: number; // positive number
   minusPoints: number; // positive number
-  totalPoints: number; // 100 + plus - minus
+  totalPoints: number; // basePoints + plus - minus
   netPoints: number; // plus - minus
-  rating: 'Tốt' | 'Khá' | 'Đạt' | 'Chưa đạt' | 'Yếu';
+  rating: 'Tốt' | 'Khá' | 'Đạt' | 'Chưa đạt';
   rank: number;
   positiveCount: number;
   negativeCount: number;
@@ -24,19 +25,22 @@ export interface StudentEmulationSummary {
 }
 
 /**
- * Tái sử dụng chính xác quy tắc xếp loại thi đua / hạnh kiểm từ hồ sơ học sinh:
- * - Net >= 30: Tốt
- * - Net >= 15: Khá
- * - Net >= 0: Đạt
- * - Net > -15: Chưa đạt
- * - Net <= -15: Yếu
+ * Xếp loại gợi ý theo thi đua:
+ * Tốt: Điểm >= T
+ * Khá: K <= Điểm < T
+ * Đạt: D <= Điểm < K
+ * Chưa đạt: Điểm < D
  */
-export function getConductRatingFromNetPoints(netPoints: number): 'Tốt' | 'Khá' | 'Đạt' | 'Chưa đạt' | 'Yếu' {
-  if (netPoints <= -15) return 'Yếu';
-  if (netPoints < 0) return 'Chưa đạt';
-  if (netPoints < 15) return 'Đạt';
-  if (netPoints < 30) return 'Khá';
-  return 'Tốt';
+export function getConductRatingFromScore(
+  totalPoints: number,
+  t: number = 105,
+  k: number = 90,
+  d: number = 70
+): 'Tốt' | 'Khá' | 'Đạt' | 'Chưa đạt' {
+  if (totalPoints >= t) return 'Tốt';
+  if (totalPoints >= k) return 'Khá';
+  if (totalPoints >= d) return 'Đạt';
+  return 'Chưa đạt';
 }
 
 /**
@@ -47,7 +51,8 @@ export function calculateEmulationData(
   disciplineRecords: DisciplineRecord[],
   startDate: string,
   endDate: string,
-  className: string
+  className: string,
+  emulationConfig?: EmulationConfig
 ): {
   summaries: StudentEmulationSummary[];
   periodRecords: (DisciplineRecord & { studentName: string })[];
@@ -81,8 +86,11 @@ export function calculateEmulationData(
     return a.studentName.localeCompare(b.studentName);
   });
 
-  // 2. Tính điểm cho tất cả học sinh của lớp (kể cả chưa có ghi nhận)
-  const basePoints = 100; // Điểm nền chuẩn của hệ thống
+  // 2. Tính điểm cho tất cả học sinh của lớp theo thang điểm đã cấu hình
+  const basePoints = emulationConfig?.initialPoints ?? 100;
+  const totTier = emulationConfig?.conductTiers?.find((t) => t.id === 'tot')?.minScore ?? 105;
+  const khaTier = emulationConfig?.conductTiers?.find((t) => t.id === 'kha')?.minScore ?? 90;
+  const datTier = emulationConfig?.conductTiers?.find((t) => t.id === 'dat')?.minScore ?? 70;
 
   const studentSummariesRaw = students.map((student) => {
     const studentRecords = periodRecords.filter((r) => r.studentId === student.id);
@@ -104,7 +112,7 @@ export function calculateEmulationData(
 
     const netPoints = plusPoints - minusPoints;
     const totalPoints = basePoints + netPoints;
-    const rating = getConductRatingFromNetPoints(netPoints);
+    const rating = getConductRatingFromScore(totalPoints, totTier, khaTier, datTier);
 
     // Ghi chú ngắn gọn nếu có chức vụ hoặc ghi chú
     const notesParts: string[] = [];
@@ -183,12 +191,20 @@ export async function exportEmulationToExcel(
     throw new Error('Chưa có danh sách học sinh của lớp để xuất báo cáo thi đua.');
   }
 
+  const activeConfig = getEmulationConfigForClass(
+    state.classEmulationConfigs,
+    state.emulationConfig,
+    state.config.className,
+    state.config.schoolYear
+  );
+
   const { summaries, periodRecords } = calculateEmulationData(
     students,
     state.discipline || [],
     periodInfo.startDate,
     periodInfo.endDate,
-    state.config.className
+    state.config.className,
+    activeConfig
   );
 
   const workbook = new ExcelJS.Workbook();
